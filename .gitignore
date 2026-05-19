@@ -13,7 +13,6 @@ CMakeUserPresets.json
 
 # OpenGL specific
 *.spv
-/build/
 /out/
 
 # IDE
