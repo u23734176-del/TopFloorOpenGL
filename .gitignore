@@ -11,6 +11,42 @@ CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
 
+# OpenGL specific
+*.spv
+/build/
+/out/
+
+# IDE
+.vscode/
+.idea/
+.vs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Compiled binaries
+*.exe
+*.out
+*.app
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+
+# Executable output
+/bin/
+
+# Texture & asset working files (Photoshop, etc.)
+*.psd
+*.ai
+
+# Log files
+*.log
+
 # CLion
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
