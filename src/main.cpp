@@ -11,9 +11,11 @@
 
 // Our stuff
 #include "core/Scene.h"
+#include "layout/Water.h"
+#include "objects/GolfBall.h"
 
-const int WIDTH = 1000;
-const int HEIGHT = 800;
+const int WIDTH = 1280;
+const int HEIGHT = 720;
 
 const char *getError(){
     const char *errorDescription;
@@ -82,6 +84,15 @@ int main(){
     Scene scene;
     LightSet lights; // Initialize with default values later
 
+    Water *water = new Water();
+    water->build();
+
+    GolfBall *ball = new GolfBall();
+    ball->build();
+
+    scene.addTransparentObject(water);
+    scene.addTransparentObject(ball);
+
     // Placeholder matrices (will be updated by the Drone Camera later)
     glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
     glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 200.0f);
@@ -104,6 +115,8 @@ int main(){
 
     glfwDestroyWindow(window);
     glDeleteProgram(0);
+    delete water;
+    delete ball;
     glfwTerminate();
     return 0;
 }
