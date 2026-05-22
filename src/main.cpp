@@ -7,9 +7,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 // Our stuff
-#include "Scene.h"
+#include "core/Scene.h"
 
 const int WIDTH = 1000;
 const int HEIGHT = 800;
@@ -78,11 +79,21 @@ int main(){
     // Clear colour
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
+    Scene scene;
+    LightSet lights; // Initialize with default values later
+
+    // Placeholder matrices (will be updated by the Drone Camera later)
+    glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
+    glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 200.0f);
+
     while (!glfwWindowShouldClose(window)){
         handleInput(window);
         
         // Clear colour and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Execute the ordered rendering pipeline
+        scene.render(view, proj, lights);
 
         // Swap buffers and poll IO events
         glfwSwapBuffers(window);
