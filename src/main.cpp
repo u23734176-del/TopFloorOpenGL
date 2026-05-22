@@ -134,14 +134,17 @@ int main()
     // Cube
     Cube cube1;
     cube1.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    cube1.setColor(glm::vec3(1.0f, 0.0f, 0.0f));
 
     Cube cube2;
     cube2.setPosition(glm::vec3(5.0f, 0.0f, 0.0f));
     cube2.setScale(glm::vec3(2.0f));
+    cube2.setColor(glm::vec3(0.0f, 0.0f, 1.0f));
 
     Cube cube3;
     cube3.setPosition(glm::vec3(-5.0f, 0.0f, 0.0f));
     cube3.setRotation(glm::vec3(45.0f, 45.0f, 0.0f));
+    cube3.setColor(glm::vec3(1.0f, 1.0f, 0.0f));
 
     scene.addObject(&cube1);
     scene.addObject(&cube2);
@@ -150,6 +153,7 @@ int main()
     // Floor
     Floor ground;
     ground.setPosition(glm::vec3(0.0f, -2.0f, 0.0f));
+    ground.setColor(glm::vec3(0.1f, 0.6f, 0.1f));
     scene.addObject(&ground);
 
     // Obstacles
@@ -157,6 +161,7 @@ int main()
 
     obstacle.setPosition(glm::vec3(3.0f, 0.0f, -5.0f));
     obstacle.setScale(glm::vec3(1.0f, 3.0f, 1.0f));
+    obstacle.setColor(glm::vec3(1.0f, 0.5f, 0.0f));
     scene.addObject(&obstacle);
 
     Wall leftWall;
