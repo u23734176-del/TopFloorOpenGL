@@ -28,6 +28,11 @@ glm::mat4 Camera::getProjectionMatrix(float width, float height)
 void Camera::processInput(GLFWwindow* window, float deltaTime)
 {
     float velocity = speed * deltaTime;
+    float rotationSpeed = 60.0f * deltaTime;
+
+    // =========================
+    // MOVEMENT
+    // =========================
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         position += front * velocity;
@@ -42,6 +47,41 @@ void Camera::processInput(GLFWwindow* window, float deltaTime)
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         position += right * velocity;
+
+    // =========================
+    // ROTATION
+    // =========================
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        yaw -= rotationSpeed;
+
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        yaw += rotationSpeed;
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        pitch += rotationSpeed;
+
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        pitch -= rotationSpeed;
+
+    // Prevent camera flipping
+    if (pitch > 89.0f)
+        pitch = 89.0f;
+
+    if (pitch < -89.0f)
+        pitch = -89.0f;
+
+    // =========================
+    // UPDATE FRONT VECTOR
+    // =========================
+
+    glm::vec3 direction;
+
+    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+
+    front = glm::normalize(direction);
 }
 
 glm::vec3 Camera::getPosition()

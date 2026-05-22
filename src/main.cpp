@@ -11,12 +11,20 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <cmath>
 
-// Our stuff
+// Our objects
 #include "core/Scene.h"
 #include "core/Camera.h"
 #include "objects/Cube.h"
 #include "objects/Floor.h"
 #include "objects/Wall.h"
+#include "objects/Ramp.h"
+#include "objects/Bridge.h"
+#include "objects/Water.h"
+#include "objects/Spinner.h"
+#include "objects/Tunnel.h"
+#include "objects/Ball.h"
+#include "objects/Flag.h"
+#include "objects/Windmill.h"
 
 const int WIDTH = 1000;
 const int HEIGHT = 800;
@@ -151,6 +159,40 @@ int main()
     obstacle.setScale(glm::vec3(1.0f, 3.0f, 1.0f));
     scene.addObject(&obstacle);
 
+    Wall leftWall;
+    leftWall.setPosition(glm::vec3(-10.0f, 0.0f, 0.0f));
+    leftWall.setScale(glm::vec3(1.0f, 2.0f, 20.0f));
+
+    scene.addObject(&leftWall);
+
+    Wall rightWall;
+    rightWall.setPosition(glm::vec3(10.0f, 0.0f, 0.0f));
+    rightWall.setScale(glm::vec3(1.0f, 2.0f, 20.0f));
+
+    scene.addObject(&rightWall);
+
+    Wall backWall;
+    backWall.setPosition(glm::vec3(0.0f, 0.0f, -20.0f));
+    backWall.setScale(glm::vec3(20.0f, 2.0f, 1.0f));
+
+    scene.addObject(&backWall);
+
+    Ramp ramp;
+    ramp.setPosition(glm::vec3(0.0f, 0.0f, -10.0f));
+    scene.addObject(&ramp);
+
+    Bridge bridge;
+    bridge.setPosition(glm::vec3(10.0f, 0.0f, -15.0f));
+    scene.addObject(&bridge);
+
+    Water water;
+    water.setPosition(glm::vec3(-10.0f, -1.5f, -10.0f));
+    scene.addObject(&water);
+
+    Ball ball;
+    ball.setPosition(glm::vec3(0.0f, -1.0f, 5.0f));
+    scene.addObject(&ball);
+
     // Build all scene objects
     scene.build();
 
@@ -183,24 +225,30 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Rotation 
-        glm::mat4 model = glm::mat4(1.0f);
+        // glm::mat4 model = glm::mat4(1.0f);
 
-        model = glm::rotate(
-            model,
-            rotationX,
-            glm::vec3(1.0f, 0.0f, 0.0f)
-        );
+        // model = glm::rotate(
+        //     model,
+        //     rotationX,
+        //     glm::vec3(1.0f, 0.0f, 0.0f)
+        // );
 
-        model = glm::rotate(
-            model,
-            rotationY,
-            glm::vec3(0.0f, 1.0f, 0.0f)
-        );
+        // model = glm::rotate(
+        //     model,
+        //     rotationY,
+        //     glm::vec3(0.0f, 1.0f, 0.0f)
+        // );
 
         // Matrices
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = camera.getProjectionMatrix(WIDTH, HEIGHT);
 
+        // Rotation
+        cube1.setRotation(glm::vec3(
+            glm::degrees(rotationX),
+            glm::degrees(rotationY),
+            0.0f
+        )); 
         // Draw scene
         scene.drawAllObjects(view, projection, lights);
 
