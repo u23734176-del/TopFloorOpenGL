@@ -10,7 +10,6 @@ private:
     GLuint vao;
     GLuint vbo;
 
-    GLuint shader;
 
 public:
     void build() override;

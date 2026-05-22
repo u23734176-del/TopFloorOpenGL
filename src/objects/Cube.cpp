@@ -1,4 +1,5 @@
 #include "Cube.h"
+#include "../core/ShaderManager.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
@@ -62,11 +63,6 @@ float vertices[] = {
 
 void Cube::build()
 {
-    shader = LoadShaders(
-        "shaders/basic.vert",
-        "shaders/basic.frag"
-    );
-
     // Generate buffers
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
@@ -84,10 +80,7 @@ void Cube::build()
         GL_STATIC_DRAW
     );
 
-    // =========================================
-    // Position Attribute
-    // =========================================
-
+    // Position attribute
     glVertexAttribPointer(
         0,
         3,
@@ -96,13 +89,9 @@ void Cube::build()
         6 * sizeof(float),
         (void*)0
     );
-
     glEnableVertexAttribArray(0);
 
-    // =========================================
-    // Normal Attribute
-    // =========================================
-
+    // Normal attribute
     glVertexAttribPointer(
         1,
         3,
@@ -111,9 +100,10 @@ void Cube::build()
         6 * sizeof(float),
         (void*)(3 * sizeof(float))
     );
-
     glEnableVertexAttribArray(1);
 
+    // Unbind
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
 
@@ -123,21 +113,20 @@ void Cube::draw(
     const LightSet& lights
 )
 {
-    glUseProgram(shader);
+    // Use the shared shader from ShaderManager (NOT a local one)
+    GLuint shaderProgram = ShaderManager::get("basic");
+    glUseProgram(shaderProgram);
 
     // =========================================
     // Model Matrix
-    // =========================================
-
     glm::mat4 model = getModelMatrix();
-
-    // =========================================
     // Uniforms
     // =========================================
 
-    GLuint modelLoc = glGetUniformLocation(shader, "model");
-    GLuint viewLoc  = glGetUniformLocation(shader, "view");
-    GLuint projLoc  = glGetUniformLocation(shader, "projection");
+    GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
+    GLuint viewLoc  = glGetUniformLocation(shaderProgram, "view");
+    GLuint projLoc  = glGetUniformLocation(shaderProgram, "projection");
+    GLuint colorLoc = glGetUniformLocation(shaderProgram, "objectColor");
 
     glUniformMatrix4fv(
         modelLoc,
@@ -160,13 +149,14 @@ void Cube::draw(
         &proj[0][0]
     );
 
+    // Set object color (bright green)
+    glUniform3f(colorLoc, 0.2f, 0.8f, 0.3f);
+
     // =========================================
-    // Draw Cube
+    // Draw
     // =========================================
 
     glBindVertexArray(vao);
-
     glDrawArrays(GL_TRIANGLES, 0, 36);
-
     glBindVertexArray(0);
 }
