@@ -7,9 +7,15 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <cmath>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <cmath>
 
 // Our stuff
-#include "Scene.h"
+#include "core/Scene.h"
+#include "core/Camera.h"
+
+#include "objects/Cube.h"
 
 const int WIDTH = 1000;
 const int HEIGHT = 800;
@@ -49,7 +55,7 @@ inline GLFWwindow *setUp(int width, int height)
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);           // To make MacOS happy; should not be needed
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // We don't want the old OpenGL
     GLFWwindow *window;                                            // (In the accompanying source code, this variable is global for simplicity)
-    window = glfwCreateWindow(width, height, "u24676412", NULL, NULL);
+    window = glfwCreateWindow(width, height, "Homework Assignment", NULL, NULL);
     if (window == NULL)
     {
         std::cout << getError() << std::endl;
@@ -62,39 +68,125 @@ inline GLFWwindow *setUp(int width, int height)
     return window;
 }
 
-inline void handleInput(GLFWwindow*& window){
+inline void handleInput(GLFWwindow*& window, float& rotationX, float& rotationY, float deltaTime) {
+    // Close window
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
         glfwSetWindowShouldClose(window, 1);
     }
+
+    float rotationSpeed = 2.0f * deltaTime;
+
+    // Rotate left/right
+    if(glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS){
+        rotationY -= rotationSpeed;
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
+        rotationY += rotationSpeed;
+    }
+
+    // Rotate up/down
+    if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
+        rotationX -= rotationSpeed;
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
+        rotationX += rotationSpeed;
+    }
 }
 
-int main(){
+int main()
+{
+    float rotationX = 0.0f;
+    float rotationY = 0.0f;
 
-    GLFWwindow *window;
+    GLFWwindow* window;
+
     try
     {
         window = setUp(WIDTH, HEIGHT);
     }
-    catch (const char *e)
+    catch (const char* e)
     {
         std::cout << e << std::endl;
-        throw;
+        return -1;
     }
 
+    // Enable depth testing
+    glEnable(GL_DEPTH_TEST);
+
+    // Camera
+    Camera camera;
+
+    // Scene
+    Scene scene;
+
+    // Objects
+    Cube cube;
+
+    scene.addObject(&cube);
+
+    // Build all scene objects
+    scene.build();
+
+    // Lighting
+    LightSet lights;
+    lights.direction = glm::vec3(-1.0f, -1.0f, -1.0f);
+    lights.ambient  = glm::vec3(0.2f);
+    lights.diffuse  = glm::vec3(1.0f);
+    lights.specular = glm::vec3(1.0f);
+
+    // Timing
+    float lastFrame = 0.0f;
+
+    // =========================
+    // Render Loop
+    // =========================
     while (!glfwWindowShouldClose(window))
     {
+        // Time calculations
+        float currentFrame = glfwGetTime();
+        float deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        // Input
+        handleInput(window, rotationX, rotationY, deltaTime);
+        camera.processInput(window, deltaTime);
+
+        // Clear screen
+        glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Rotation 
+        glm::mat4 model = glm::mat4(1.0f);
 
+        model = glm::rotate(
+            model,
+            rotationX,
+            glm::vec3(1.0f, 0.0f, 0.0f)
+        );
+
+        model = glm::rotate(
+            model,
+            rotationY,
+            glm::vec3(0.0f, 1.0f, 0.0f)
+        );
+
+        // Matrices
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 projection = camera.getProjectionMatrix(WIDTH, HEIGHT);
+
+        // Draw scene
+        scene.drawAllObjects(view, projection, lights);
+
+        // Swap buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
-        handleInput(window);
     }
-    
 
-
+    // Cleanup
     glfwDestroyWindow(window);
-    glDeleteProgram(0);
     glfwTerminate();
+
     return 0;
 }

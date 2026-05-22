@@ -2,19 +2,17 @@
 #define LIGHTSET_H
 
 #include <iostream>
-#include "ShaderManager.h"
+#include "../core/ShaderManager.h"
 
-
+#include <glm/glm.hpp>
 
 struct LightSet
 {
-    /* 
-        dir light,
-        point lights[]
-        spotlight,
-        ambient,
-        time-of-day
-     */
+    glm::vec3 direction;
+    
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
 };
 
 

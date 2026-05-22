@@ -1,0 +1,25 @@
+#ifndef CUBE_H
+#define CUBE_H
+
+#include "../core/SceneObject.h"
+#include "../core/shader.hpp"
+
+class Cube : public SceneObject
+{
+private:
+    GLuint vao;
+    GLuint vbo;
+
+    GLuint shader;
+
+public:
+    void build() override;
+
+    void draw(
+        const glm::mat4& view,
+        const glm::mat4& proj,
+        const LightSet& lights
+    ) override;
+};
+
+#endif
