@@ -1,62 +1,63 @@
 #include "Cube.h"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <GLFW/glfw3.h>
 
 float vertices[] = {
 
-    // FRONT
-    -1.0f, -1.0f,  1.0f,
-     1.0f, -1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,
+    // FRONT FACE
+    -1.0f, -1.0f,  1.0f,   0.0f, 0.0f, 1.0f,
+     1.0f, -1.0f,  1.0f,   0.0f, 0.0f, 1.0f,
+     1.0f,  1.0f,  1.0f,   0.0f, 0.0f, 1.0f,
 
-     1.0f,  1.0f,  1.0f,
-    -1.0f,  1.0f,  1.0f,
-    -1.0f, -1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,   0.0f, 0.0f, 1.0f,
+    -1.0f,  1.0f,  1.0f,   0.0f, 0.0f, 1.0f,
+    -1.0f, -1.0f,  1.0f,   0.0f, 0.0f, 1.0f,
 
-    // BACK
-    -1.0f, -1.0f, -1.0f,
-    -1.0f,  1.0f, -1.0f,
-     1.0f,  1.0f, -1.0f,
+    // BACK FACE
+    -1.0f, -1.0f, -1.0f,   0.0f, 0.0f,-1.0f,
+    -1.0f,  1.0f, -1.0f,   0.0f, 0.0f,-1.0f,
+     1.0f,  1.0f, -1.0f,   0.0f, 0.0f,-1.0f,
 
-     1.0f,  1.0f, -1.0f,
-     1.0f, -1.0f, -1.0f,
-    -1.0f, -1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,   0.0f, 0.0f,-1.0f,
+     1.0f, -1.0f, -1.0f,   0.0f, 0.0f,-1.0f,
+    -1.0f, -1.0f, -1.0f,   0.0f, 0.0f,-1.0f,
 
-    // LEFT
-    -1.0f,  1.0f,  1.0f,
-    -1.0f,  1.0f, -1.0f,
-    -1.0f, -1.0f, -1.0f,
+    // LEFT FACE
+    -1.0f,  1.0f,  1.0f,  -1.0f, 0.0f, 0.0f,
+    -1.0f,  1.0f, -1.0f,  -1.0f, 0.0f, 0.0f,
+    -1.0f, -1.0f, -1.0f,  -1.0f, 0.0f, 0.0f,
 
-    -1.0f, -1.0f, -1.0f,
-    -1.0f, -1.0f,  1.0f,
-    -1.0f,  1.0f,  1.0f,
+    -1.0f, -1.0f, -1.0f,  -1.0f, 0.0f, 0.0f,
+    -1.0f, -1.0f,  1.0f,  -1.0f, 0.0f, 0.0f,
+    -1.0f,  1.0f,  1.0f,  -1.0f, 0.0f, 0.0f,
 
-    // RIGHT
-     1.0f,  1.0f,  1.0f,
-     1.0f, -1.0f, -1.0f,
-     1.0f,  1.0f, -1.0f,
+    // RIGHT FACE
+     1.0f,  1.0f,  1.0f,   1.0f, 0.0f, 0.0f,
+     1.0f, -1.0f, -1.0f,   1.0f, 0.0f, 0.0f,
+     1.0f,  1.0f, -1.0f,   1.0f, 0.0f, 0.0f,
 
-     1.0f, -1.0f, -1.0f,
-     1.0f,  1.0f,  1.0f,
-     1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f, -1.0f,   1.0f, 0.0f, 0.0f,
+     1.0f,  1.0f,  1.0f,   1.0f, 0.0f, 0.0f,
+     1.0f, -1.0f,  1.0f,   1.0f, 0.0f, 0.0f,
 
-    // TOP
-    -1.0f,  1.0f, -1.0f,
-    -1.0f,  1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,
+    // TOP FACE
+    -1.0f,  1.0f, -1.0f,   0.0f, 1.0f, 0.0f,
+    -1.0f,  1.0f,  1.0f,   0.0f, 1.0f, 0.0f,
+     1.0f,  1.0f,  1.0f,   0.0f, 1.0f, 0.0f,
 
-     1.0f,  1.0f,  1.0f,
-     1.0f,  1.0f, -1.0f,
-    -1.0f,  1.0f, -1.0f,
+     1.0f,  1.0f,  1.0f,   0.0f, 1.0f, 0.0f,
+     1.0f,  1.0f, -1.0f,   0.0f, 1.0f, 0.0f,
+    -1.0f,  1.0f, -1.0f,   0.0f, 1.0f, 0.0f,
 
-    // BOTTOM
-    -1.0f, -1.0f, -1.0f,
-     1.0f, -1.0f, -1.0f,
-     1.0f, -1.0f,  1.0f,
+    // BOTTOM FACE
+    -1.0f, -1.0f, -1.0f,   0.0f,-1.0f, 0.0f,
+     1.0f, -1.0f, -1.0f,   0.0f,-1.0f, 0.0f,
+     1.0f, -1.0f,  1.0f,   0.0f,-1.0f, 0.0f,
 
-     1.0f, -1.0f,  1.0f,
-    -1.0f, -1.0f,  1.0f,
-    -1.0f, -1.0f, -1.0f
+     1.0f, -1.0f,  1.0f,   0.0f,-1.0f, 0.0f,
+    -1.0f, -1.0f,  1.0f,   0.0f,-1.0f, 0.0f,
+    -1.0f, -1.0f, -1.0f,   0.0f,-1.0f, 0.0f
 };
 
 void Cube::build()
@@ -66,12 +67,16 @@ void Cube::build()
         "shaders/basic.frag"
     );
 
+    // Generate buffers
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
 
+    // Bind VAO
     glBindVertexArray(vao);
 
+    // Bind VBO
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
     glBufferData(
         GL_ARRAY_BUFFER,
         sizeof(vertices),
@@ -79,16 +84,37 @@ void Cube::build()
         GL_STATIC_DRAW
     );
 
+    // =========================================
+    // Position Attribute
+    // =========================================
+
     glVertexAttribPointer(
         0,
         3,
         GL_FLOAT,
         GL_FALSE,
-        3 * sizeof(float),
+        6 * sizeof(float),
         (void*)0
     );
 
     glEnableVertexAttribArray(0);
+
+    // =========================================
+    // Normal Attribute
+    // =========================================
+
+    glVertexAttribPointer(
+        1,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        6 * sizeof(float),
+        (void*)(3 * sizeof(float))
+    );
+
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(0);
 }
 
 void Cube::draw(
@@ -99,11 +125,26 @@ void Cube::draw(
 {
     glUseProgram(shader);
 
+    // =========================================
+    // Model Matrix
+    // =========================================
+
     glm::mat4 model = glm::mat4(1.0f);
 
+    // Rotate cube over time
+    model = glm::rotate(
+        model,
+        (float)glfwGetTime(),
+        glm::vec3(0.0f, 1.0f, 0.0f)
+    );
+
+    // =========================================
+    // Uniforms
+    // =========================================
+
     GLuint modelLoc = glGetUniformLocation(shader, "model");
-    GLuint viewLoc = glGetUniformLocation(shader, "view");
-    GLuint projLoc = glGetUniformLocation(shader, "projection");
+    GLuint viewLoc  = glGetUniformLocation(shader, "view");
+    GLuint projLoc  = glGetUniformLocation(shader, "projection");
 
     glUniformMatrix4fv(
         modelLoc,
@@ -126,7 +167,13 @@ void Cube::draw(
         &proj[0][0]
     );
 
+    // =========================================
+    // Draw Cube
+    // =========================================
+
     glBindVertexArray(vao);
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glBindVertexArray(0);
 }
