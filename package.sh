@@ -5,23 +5,24 @@ echo "1. Creating submission staging directory..."
 mkdir -p submission_build
 
 echo "2. Flattening source files..."
-find src -type f -name "*.cpp" -exec cp {} submission_build/ \;
-find src -type f -name "*.h" -exec cp {} submission_build/ \;
+find src -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -exec cp {} submission_build/ \;
 
-echo "3. Rewriting include paths to flat structure..."
-# Replaces #include "folder/File.h" with #include "File.h"
+echo "3. Converting all includes to local style..."
+# This regex looks for any #include "folder/file.ext" and turns it into #include "file.ext"
+# It works regardless of whether the folder is there or not.
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS sed
-    find submission_build -type f \( -name "*.cpp" -o -name "*.h" \) -exec sed -i '' -E 's/#include +"[a-zA-Z0-9_]+\/([^"]+)"/#include "\1"/g' {} +
+    find submission_build -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -exec sed -i '' -E 's/#include +"[^"]*\/([^"]+)"/#include "\1"/g' {} +
 else
-    # Linux sed
-    find submission_build -type f \( -name "*.cpp" -o -name "*.h" \) -exec sed -i -E 's/#include +"[a-zA-Z0-9_]+\/([^"]+)"/#include "\1"/g' {} +
+    find submission_build -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -exec sed -i -E 's/#include +"[^"]*\/([^"]+)"/#include "\1"/g' {} +
 fi
 
-echo "4. Copying assets..."
-cp -r shaders/ submission_build/shaders/
-cp -r textures/ submission_build/textures/
-cp -r skybox/ submission_build/skybox/
+echo "4. Copying assets (flattening asset directories)..."
+mkdir -p submission_build/shaders submission_build/textures submission_build/skybox
+
+# Use 'cp -r folder/* destination/' to copy contents, not the folder itself
+cp -r shaders/* submission_build/shaders/ 2>/dev/null || :
+cp -r textures/* submission_build/textures/ 2>/dev/null || :
+cp -r skybox/* submission_build/skybox/ 2>/dev/null || :
 
 echo "5. Generating flat Makefile..."
 cat << 'EOF' > submission_build/Makefile
@@ -44,18 +45,11 @@ $(TARGET): $(OBJ)
 clean:
 	rm -f $(OBJ) $(TARGET)
 
-run: all
-	./$(TARGET)
-
 .PHONY: all clean run
 EOF
 
-echo "6. Executing Clean Clone Build Test..."
+echo "6. Build Test..."
 cd submission_build
 make clean
 make
-
-echo "Build successful. Zipping archive..."
-cd ..
-zip -r TopFloor_MiniGolf_Archive.zip submission_build/
-echo "Done. Upload TopFloor_MiniGolf_Archive.zip to ClickUp and FitchFork."
+echo "Packaging complete. Check submission_build/."
