@@ -1,10 +1,10 @@
 #ifndef SCENEOBJECT_H
 #define SCENEOBJECT_H
 
+#include "../lighting/LightSet.h"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
-#include "../lighting/LightSet.h"
 
 class SceneObject
 {
@@ -14,6 +14,8 @@ protected:
     glm::vec3 rotation;
     glm::vec3 scale;
 
+    glm::vec3 color;
+
 public:
 
     SceneObject()
@@ -21,6 +23,8 @@ public:
         position = glm::vec3(0.0f);
         rotation = glm::vec3(0.0f);
         scale = glm::vec3(1.0f);
+
+        color = glm::vec3(1.0f);
     }
 
     virtual void build() = 0;
@@ -31,18 +35,18 @@ public:
         const LightSet& lights
     ) = 0;
 
-    // =========================
-    // Transform Functions
-    // =========================
+    // =========================================
+    // TRANSFORMS
+    // =========================================
 
-    void setPosition(glm::vec3 pos)
+    void setPosition(glm::vec3 p)
     {
-        position = pos;
+        position = p;
     }
 
-    void setRotation(glm::vec3 rot)
+    void setRotation(glm::vec3 r)
     {
-        rotation = rot;
+        rotation = r;
     }
 
     void setScale(glm::vec3 s)
@@ -50,57 +54,49 @@ public:
         scale = s;
     }
 
-    glm::vec3 getPosition()
+    // =========================================
+    // COLOR
+    // =========================================
+
+    void setColor(glm::vec3 c)
     {
-        return position;
+        color = c;
     }
 
-    glm::vec3 getRotation()
+    glm::vec3 getColor()
     {
-        return rotation;
+        return color;
     }
 
-    glm::vec3 getScale()
-    {
-        return scale;
-    }
+    // =========================================
+    // MODEL MATRIX
+    // =========================================
 
     glm::mat4 getModelMatrix()
     {
         glm::mat4 model = glm::mat4(1.0f);
 
-        // Translation
-        model = glm::translate(
-            model,
-            position
-        );
+        model = glm::translate(model, position);
 
-        // Rotation X
         model = glm::rotate(
             model,
             glm::radians(rotation.x),
             glm::vec3(1.0f, 0.0f, 0.0f)
         );
 
-        // Rotation Y
         model = glm::rotate(
             model,
             glm::radians(rotation.y),
             glm::vec3(0.0f, 1.0f, 0.0f)
         );
 
-        // Rotation Z
         model = glm::rotate(
             model,
             glm::radians(rotation.z),
             glm::vec3(0.0f, 0.0f, 1.0f)
         );
 
-        // Scale
-        model = glm::scale(
-            model,
-            scale
-        );
+        model = glm::scale(model, scale);
 
         return model;
     }

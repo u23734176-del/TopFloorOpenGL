@@ -138,6 +138,7 @@ void Cube::draw(
     GLuint modelLoc = glGetUniformLocation(shader, "model");
     GLuint viewLoc  = glGetUniformLocation(shader, "view");
     GLuint projLoc  = glGetUniformLocation(shader, "projection");
+    GLuint colorLoc = glGetUniformLocation(shader, "objectColor");
 
     glUniformMatrix4fv(
         modelLoc,
@@ -158,6 +159,12 @@ void Cube::draw(
         1,
         GL_FALSE,
         &proj[0][0]
+    );
+
+    glUniform3fv(
+        colorLoc,
+        1,
+        &color[0]
     );
 
     // =========================================
