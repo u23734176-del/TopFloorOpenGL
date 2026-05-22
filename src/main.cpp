@@ -1,12 +1,12 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <cmath>
 
 // opengl imports
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <cmath>
 
 // Our stuff
 #include "Scene.h"
@@ -14,15 +14,13 @@
 const int WIDTH = 1000;
 const int HEIGHT = 800;
 
-const char *getError()
-{
+const char *getError(){
     const char *errorDescription;
     glfwGetError(&errorDescription);
     return errorDescription;
 }
 
-inline void startUpGLFW()
-{
+inline void startUpGLFW(){
     glewExperimental = true; // Needed for core profile
     if (!glfwInit())
     {
@@ -30,8 +28,7 @@ inline void startUpGLFW()
     }
 }
 
-inline void startUpGLEW()
-{
+inline void startUpGLEW(){
     glewExperimental = true; // Needed in core profile
     if (glewInit() != GLEW_OK)
     {
@@ -40,8 +37,7 @@ inline void startUpGLEW()
     }
 }
 
-inline GLFWwindow *setUp(int width, int height)
-{
+inline GLFWwindow *setUp(int width, int height){
     startUpGLFW();
     glfwWindowHint(GLFW_SAMPLES, 4);               // 4x antialiasing
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
@@ -71,24 +67,26 @@ inline void handleInput(GLFWwindow*& window){
 int main(){
 
     GLFWwindow *window;
-    try
-    {
+    try{
         window = setUp(WIDTH, HEIGHT);
     }
-    catch (const char *e)
-    {
+    catch (const char *e){
         std::cout << e << std::endl;
         throw;
     }
 
-    while (!glfwWindowShouldClose(window))
-    {
+    // Clear colour
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
+    while (!glfwWindowShouldClose(window)){
+        handleInput(window);
+        
+        // Clear colour and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
+        // Swap buffers and poll IO events
         glfwSwapBuffers(window);
         glfwPollEvents();
-        handleInput(window);
     }
     
 
