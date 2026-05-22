@@ -16,6 +16,13 @@ class Scene{
     private:
         std::vector<SceneObject*> objects;
         
+    public: 
+        void addObject(SceneObject* obj);
+
+        void drawAllObjects(const glm::mat4& view,
+                            const glm::mat4& projection,
+                            const LightSet& lights);
+        
 };
 
 #endif
