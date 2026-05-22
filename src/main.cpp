@@ -13,6 +13,7 @@
 #include "core/Scene.h"
 #include "layout/Water.h"
 #include "objects/GolfBall.h"
+#include "objects/TreeDecoration.h"
 
 const int WIDTH = 1280;
 const int HEIGHT = 720;
@@ -93,6 +94,17 @@ int main(){
     scene.addTransparentObject(water);
     scene.addTransparentObject(ball);
 
+    TreeDecoration *trees = new TreeDecoration();
+    trees->build();
+
+    // Add multiple instances of the tree around the course using Flyweight pattern
+    trees->addInstance(glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 5.0f)));
+    trees->addInstance(glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, 0.0f, 8.0f)));
+    trees->addInstance(glm::translate(glm::mat4(1.0f), glm::vec3(12.0f, 0.0f, -3.0f)));
+    trees->addInstance(glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-8.0f, 0.0f, -6.0f)), glm::vec3(1.5f)));
+
+    scene.addOpaqueObject(trees);
+
     // Placeholder matrices (will be updated by the Drone Camera later)
     glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
     glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 200.0f);
@@ -117,6 +129,7 @@ int main(){
     glDeleteProgram(0);
     delete water;
     delete ball;
+    delete trees;
     glfwTerminate();
     return 0;
 }
