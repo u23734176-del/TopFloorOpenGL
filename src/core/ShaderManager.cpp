@@ -1,5 +1,5 @@
 #include "ShaderManager.h"
-#inlcude "shader.hpp"
+#include "shader.hpp"
 
 std::map<std::string, GLuint> ShaderManager::shaders;
 

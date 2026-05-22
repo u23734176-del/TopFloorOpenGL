@@ -2,7 +2,7 @@
 #define LIGHTSET_H
 
 #include <iostream>
-#include "ShaderManager.h"
+#include "../core/ShaderManager.h"
 
 #include <glm/glm.hpp>
 

@@ -7,8 +7,9 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <cmath>
-
-include <cmath>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <cmath>
 
 // Our stuff
 #include "core/Scene.h"
@@ -54,7 +55,7 @@ inline GLFWwindow *setUp(int width, int height)
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);           // To make MacOS happy; should not be needed
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // We don't want the old OpenGL
     GLFWwindow *window;                                            // (In the accompanying source code, this variable is global for simplicity)
-    window = glfwCreateWindow(width, height, "u24676412", NULL, NULL);
+    window = glfwCreateWindow(width, height, "Homework Assignment", NULL, NULL);
     if (window == NULL)
     {
         std::cout << getError() << std::endl;
@@ -67,14 +68,38 @@ inline GLFWwindow *setUp(int width, int height)
     return window;
 }
 
-inline void handleInput(GLFWwindow*& window){
+inline void handleInput(GLFWwindow*& window, float& rotationX, float& rotationY, float deltaTime) {
+    // Close window
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
         glfwSetWindowShouldClose(window, 1);
+    }
+
+    float rotationSpeed = 2.0f * deltaTime;
+
+    // Rotate left/right
+    if(glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS){
+        rotationY -= rotationSpeed;
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
+        rotationY += rotationSpeed;
+    }
+
+    // Rotate up/down
+    if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
+        rotationX -= rotationSpeed;
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
+        rotationX += rotationSpeed;
     }
 }
 
 int main()
 {
+    float rotationX = 0.0f;
+    float rotationY = 0.0f;
+
     GLFWwindow* window;
 
     try
@@ -125,12 +150,27 @@ int main()
         lastFrame = currentFrame;
 
         // Input
-        handleInput(window);
+        handleInput(window, rotationX, rotationY, deltaTime);
         camera.processInput(window, deltaTime);
 
         // Clear screen
         glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Rotation 
+        glm::mat4 model = glm::mat4(1.0f);
+
+        model = glm::rotate(
+            model,
+            rotationX,
+            glm::vec3(1.0f, 0.0f, 0.0f)
+        );
+
+        model = glm::rotate(
+            model,
+            rotationY,
+            glm::vec3(0.0f, 1.0f, 0.0f)
+        );
 
         // Matrices
         glm::mat4 view = camera.getViewMatrix();

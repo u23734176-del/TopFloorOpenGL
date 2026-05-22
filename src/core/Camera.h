@@ -19,11 +19,12 @@ class Camera {
     public:
         Camera();
 
+        glm::mat4 getViewMatrix();
         glm::mat4 getProjectionMatrix(float width, float height);
 
         void processInput(GLFWwindow* window, float deltaTime);
 
         glm::vec3 getPosition();
-}
+};
 
 #endif
