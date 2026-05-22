@@ -14,8 +14,9 @@
 // Our stuff
 #include "core/Scene.h"
 #include "core/Camera.h"
-
 #include "objects/Cube.h"
+#include "objects/Floor.h"
+#include "objects/Wall.h"
 
 const int WIDTH = 1000;
 const int HEIGHT = 800;
@@ -122,9 +123,33 @@ int main()
     Scene scene;
 
     // Objects
-    Cube cube;
+    // Cube
+    Cube cube1;
+    cube1.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 
-    scene.addObject(&cube);
+    Cube cube2;
+    cube2.setPosition(glm::vec3(5.0f, 0.0f, 0.0f));
+    cube2.setScale(glm::vec3(2.0f));
+
+    Cube cube3;
+    cube3.setPosition(glm::vec3(-5.0f, 0.0f, 0.0f));
+    cube3.setRotation(glm::vec3(45.0f, 45.0f, 0.0f));
+
+    scene.addObject(&cube1);
+    scene.addObject(&cube2);
+    scene.addObject(&cube3);
+
+    // Floor
+    Floor ground;
+    ground.setPosition(glm::vec3(0.0f, -2.0f, 0.0f));
+    scene.addObject(&ground);
+
+    // Obstacles
+    Cube obstacle;
+
+    obstacle.setPosition(glm::vec3(3.0f, 0.0f, -5.0f));
+    obstacle.setScale(glm::vec3(1.0f, 3.0f, 1.0f));
+    scene.addObject(&obstacle);
 
     // Build all scene objects
     scene.build();

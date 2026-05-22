@@ -129,14 +129,7 @@ void Cube::draw(
     // Model Matrix
     // =========================================
 
-    glm::mat4 model = glm::mat4(1.0f);
-
-    // Rotate cube over time
-    model = glm::rotate(
-        model,
-        (float)glfwGetTime(),
-        glm::vec3(0.0f, 1.0f, 0.0f)
-    );
+    glm::mat4 model = getModelMatrix();
 
     // =========================================
     // Uniforms
