@@ -105,13 +105,38 @@ int main(){
 
     scene.addOpaqueObject(trees);
 
+    // Add these variables before the main loop
+    float deltaTime = 0.0f;
+    float lastFrame = 0.0f;
+
+    // Create dummy obstacle for testing
+    AABB testObstacle = {glm::vec3(2.0f, 0.0f, 2.0f), glm::vec3(3.0f, 1.0f, 3.0f)};
+
     // Placeholder matrices (will be updated by the Drone Camera later)
     glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
     glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 200.0f);
 
     while (!glfwWindowShouldClose(window)){
+        // Calculate deltaTime
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
         handleInput(window);
-        
+
+        // Give ball initial push for testing if spacebar is pressed
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
+            ball->applyForce(glm::vec3(0.5f, 0.0f, 0.5f));
+        }
+
+        // Fixed step physics update (simulating turf friction of 0.98)
+        ball->update(deltaTime);
+        ball->resolveGroundCollision(0.0f, 0.98f);
+
+        if (intersects(ball->getBoundingSphere(), testObstacle)){
+            ball->resolveCollision(testObstacle);
+        }
+
         // Clear colour and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -127,9 +152,17 @@ int main(){
 
     glfwDestroyWindow(window);
     glDeleteProgram(0);
+    // 1. Delete all dynamically allocated SceneObjects
+    // This triggers their destructors, which call glDeleteVertexArrays and glDeleteBuffers
     delete water;
     delete ball;
     delete trees;
+    // 2. Clear Scene vectors (optional but good practice)
+    // Note: If Scene owned the pointers, it would delete them in its destructor.
+    // Since we created them in main, we delete them in main.
+
+    
+    // 3. Terminate GLFW context
     glfwTerminate();
     return 0;
 }
