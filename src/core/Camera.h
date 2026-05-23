@@ -15,7 +15,14 @@ class Camera {
         float yaw;
         float pitch;
         float speed;
-    
+        float roll;
+
+        bool firstMouse;
+        float lastX, lastY;
+        bool mouseInWindow;
+        float sensitivity;
+        
+        void updateFront();
     public:
         Camera();
 
@@ -23,8 +30,13 @@ class Camera {
         glm::mat4 getProjectionMatrix(float width, float height);
 
         void processInput(GLFWwindow* window, float deltaTime);
-
+        void processMouseMovement(float xpos, float ypos);
         glm::vec3 getPosition();
+        void resetMouse();
+        float getRoll();
+
+        float getYaw();
+        float getPitch();
 };
 
 #endif
