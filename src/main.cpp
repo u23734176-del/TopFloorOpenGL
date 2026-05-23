@@ -27,6 +27,9 @@
 #include "objects/Ball.h"
 #include "objects/Flag.h"
 #include "objects/Windmill.h"
+#include "objects/SphereBall.h"
+#include "physics/BallPhysics.h"
+#include "physics/PhysicsWorld.h"
 
 // Post Processor 
 #include "ui/PostProcessor.h"
@@ -352,7 +355,24 @@ int main()
     ball.setPosition(glm::vec3(0.0f, -1.0f, 5.0f));
     scene.addObject(&ball);
 
+    SphereBall golfBall;
+    golfBall.setRadius(0.5f);
+    golfBall.setColor(glm::vec3(1.0f, 1.0f, 1.0f));     // white
+    golfBall.setPosition(glm::vec3(2.0f, -1.0f, 5.0f)); // beside the cube ball
+    scene.addObject(&golfBall);
+
     scene.build();
+
+    BallPhysics ballPhysics;
+    ballPhysics.setRadius(0.5f); // MUST match golfBall radius
+
+    PhysicsWorld world;
+    world.setBall(&golfBall, &ballPhysics);
+    world.setGroundLevel(-2.0f); // top of Floor (ground at y=-2)
+    world.addCollider(&leftWall, Surface::SOLID);
+    world.addCollider(&rightWall, Surface::SOLID);
+    world.addCollider(&backWall, Surface::SOLID);
+    world.addCollider(&obstacle, Surface::SOLID);
 
     LightSet lights;
     updateLightingForDayNight(lights, isNight);
@@ -372,7 +392,14 @@ int main()
         handleInput(window, rotationX, rotationY, deltaTime, postProcessor, isNight, lights);
         camera.processInput(window, deltaTime);
 
-        
+        static bool spaceWasDown = false;
+        bool spaceDown = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
+        if (spaceDown && !spaceWasDown){
+            ballPhysics.putt(glm::vec3(0.0f, 0.0f, -6.0f)); // fixed −Z putt for now
+        }
+        spaceWasDown = spaceDown;
+
+        world.update(deltaTime);
 
         glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

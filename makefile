@@ -11,9 +11,14 @@ stb_image.cpp \
 src/lighting/shadowMap.cpp \
 src/ui/HUD.cpp \
 src/ui/PostProcessor.cpp \
+src/objects/SphereBall.cpp \
+src/physics/Collision.cpp \
+src/physics/PhysicsWorld.cpp \
+src/physics/BallPhysics.cpp \
+src/objects/Decoration.cpp \
 
 main: src/main.cpp src/glad.c
-	g++ -std=c++11 -g $(files) src/main.cpp src/glad.c -lglfw3 -pthread -lGLEW -ldl -lGL -o main
+	g++ -std=c++11 -g $(files) src/main.cpp src/glad.c -lglfw -pthread -lGLEW -ldl -lGL -o main
 
 clean:
 	rm -f *.o main
