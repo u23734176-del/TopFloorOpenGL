@@ -16,6 +16,29 @@ Camera::Camera() {
     lastY       = 0.0f;
     mouseInWindow = true;
 }
+void Camera::setFirstPerson(const glm::vec3& pos, const glm::vec3& droneF)
+{
+    // offset forward and up so camera sits just in front of the drone body
+    position = pos + droneF * 0.4f + glm::vec3(0.0f, 0.15f, 0.0f);
+
+    yaw   = glm::degrees(atan2(droneF.z, droneF.x));
+    pitch = glm::degrees(asin(glm::clamp(droneF.y, -1.0f, 1.0f)));
+
+    updateFront();
+}
+void Camera::followTarget(const glm::vec3& targetPos, const glm::vec3& targetFront, float rollDeg)
+{
+    float distance = 3.0f;
+    float height   = 1.5f;
+
+    position = targetPos - targetFront * distance + glm::vec3(0.0f, height, 0.0f);
+
+    glm::vec3 dir = glm::normalize(targetPos - position);
+    yaw   = glm::degrees(atan2(dir.z, dir.x));
+    pitch = glm::degrees(asin(glm::clamp(dir.y, -1.0f, 1.0f)));
+
+    updateFront();
+}
 
 void Camera::updateFront()
 {
