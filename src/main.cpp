@@ -18,6 +18,9 @@
 
 // Course (Slice D)
 #include "layout/Course.h"
+#include "objects/SphereBall.h"
+#include "physics/BallPhysics.h"
+#include "physics/PhysicsWorld.h"
 
 // Post Processor
 #include "ui/PostProcessor.h"
@@ -254,6 +257,17 @@ int main()
     course.addToScene(addObjectToScene);
 
     scene.build();
+
+    BallPhysics ballPhysics;
+    ballPhysics.setRadius(0.5f); // MUST match golfBall radius
+
+    PhysicsWorld world;
+    world.setBall(&golfBall, &ballPhysics);
+    world.setGroundLevel(-2.0f); // top of Floor (ground at y=-2)
+    world.addCollider(&leftWall, Surface::SOLID);
+    world.addCollider(&rightWall, Surface::SOLID);
+    world.addCollider(&backWall, Surface::SOLID);
+    world.addCollider(&obstacle, Surface::SOLID);
 
     // ---- Lighting ----
     LightSet lights;
