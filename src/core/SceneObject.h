@@ -4,6 +4,8 @@
 #include "../lighting/LightSet.h"
 #include "Collision.h"
 #include "ResourceManager.h"
+
+#include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
@@ -34,6 +36,61 @@ public:
         const LightSet& lights
     ) = 0;
 
+    virtual void drawDepth(GLuint depthShaderProgram) = 0;
+
+    void setPosition(glm::vec3 p)
+    {
+        position = p;
+    }
+
+    void setRotation(glm::vec3 r)
+    {
+        rotation = r;
+    }
+
+    void setScale(glm::vec3 s)
+    {
+        scale = s;
+    }
+
+    void setColor(glm::vec3 c)
+    {
+        color = c;
+    }
+
+    glm::vec3 getColor()
+    {
+        return color;
+    }
+
+    glm::mat4 getModelMatrix()
+    {
+        glm::mat4 model = glm::mat4(1.0f);
+
+        model = glm::translate(model, position);
+
+        model = glm::rotate(
+            model,
+            glm::radians(rotation.x),
+            glm::vec3(1.0f, 0.0f, 0.0f)
+        );
+
+        model = glm::rotate(
+            model,
+            glm::radians(rotation.y),
+            glm::vec3(0.0f, 1.0f, 0.0f)
+        );
+
+        model = glm::rotate(
+            model,
+            glm::radians(rotation.z),
+            glm::vec3(0.0f, 0.0f, 1.0f)
+        );
+
+        model = glm::scale(model, scale);
+
+        return model;
+    }
     void setPosition(glm::vec3 p);
     void setRotation(glm::vec3 r);
     void setScale(glm::vec3 s);

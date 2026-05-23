@@ -19,3 +19,11 @@ void Scene::drawAllObjects(const glm::mat4& view,
         obj->draw(view, projection, lights);
     }
 }
+
+void Scene::drawDepthAllObjects(GLuint depthShaderProgram)
+{
+    for (SceneObject* obj : objects)
+    {
+        obj->drawDepth(depthShaderProgram);
+    }
+}
