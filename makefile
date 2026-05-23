@@ -17,6 +17,7 @@ src/objects/Rock.cpp \
 src/objects/Tunnel.cpp \
 src/objects/GolfHole.cpp \
 src/layout/Course.cpp \
+skybox/skybox.cpp \
 # src/objects/Windmill.cpp \
 
 main: src/main.cpp src/glad.c

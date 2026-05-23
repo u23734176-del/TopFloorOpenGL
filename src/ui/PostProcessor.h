@@ -16,7 +16,7 @@ private:
     GLuint shader;
 
     int mode;
-    int currentMode;
+    
 
 public:
     PostProcessor();
