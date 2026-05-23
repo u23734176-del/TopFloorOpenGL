@@ -35,6 +35,7 @@ Thumbs.db
 *.dll
 *.so
 *.dylib
+main
 
 # Executable output
 /bin/
