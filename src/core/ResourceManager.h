@@ -3,9 +3,7 @@
 
 #include <unordered_map>
 #include <string>
-#include <memory>
 #include <GL/glew.h>
-#include <glm/glm.hpp>
 
 struct Texture {
     GLuint id;
@@ -13,10 +11,11 @@ struct Texture {
     int height;
     int channels;
     std::string path;
+    int refCount;  // Manual reference counting
     
-    Texture() : id(0), width(0), height(0), channels(0) {}
+    Texture() : id(0), width(0), height(0), channels(0), refCount(0) {}
     Texture(GLuint _id, int _w, int _h, int _c, const std::string& _path) 
-        : id(_id), width(_w), height(_h), channels(_c), path(_path) {}
+        : id(_id), width(_w), height(_h), channels(_c), path(_path), refCount(1) {}
 };
 
 class ResourceManager {
@@ -25,13 +24,7 @@ private:
     static ResourceManager* instance;
     
     // Texture cache
-    std::unordered_map<std::string, std::shared_ptr<Texture>> textures;
-    
-    // Optional: Model cache for future expansion
-    // std::unordered_map<std::string, std::shared_ptr<Model>> models;
-    
-    // Optional: Shader cache for future expansion
-    // std::unordered_map<std::string, std::shared_ptr<Shader>> shaders;
+    std::unordered_map<std::string, Texture*> textures;
     
     // Private constructor for singleton
     ResourceManager();
@@ -47,16 +40,17 @@ public:
     // Get singleton instance
     static ResourceManager* getInstance();
     
-    // Load texture (returns shared_ptr to allow sharing)
-    std::shared_ptr<Texture> loadTexture(const std::string& filePath);
+    // Load texture (returns pointer, increments ref count if already loaded)
+    Texture* loadTexture(const std::string& filePath);
+    
+    // Release texture (decrements ref count, deletes if zero)
+    void releaseTexture(const std::string& filePath);
+    void releaseTexture(Texture* texture);
     
     // Get texture if already loaded (returns nullptr if not found)
-    std::shared_ptr<Texture> getTexture(const std::string& filePath);
+    Texture* getTexture(const std::string& filePath);
     
-    // Unload specific texture
-    void unloadTexture(const std::string& filePath);
-    
-    // Unload all textures
+    // Unload all textures (force delete all)
     void unloadAllTextures();
     
     // Get texture count for debugging
@@ -65,7 +59,7 @@ public:
     // Check if texture is loaded
     bool isTextureLoaded(const std::string& filePath) const;
     
-    // Clean up orphaned textures (optional)
+    // Clean up unused textures (refCount == 0)
     void cleanupUnusedTextures();
 };
 

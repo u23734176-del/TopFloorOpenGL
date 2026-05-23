@@ -1,7 +1,7 @@
 #include "ResourceManager.h"
 #include "stb_image.h"
 #include <iostream>
-#include <algorithm>
+#include <cstdio>
 
 // Initialize static member
 ResourceManager* ResourceManager::instance = nullptr;
@@ -22,11 +22,13 @@ ResourceManager* ResourceManager::getInstance() {
     return instance;
 }
 
-std::shared_ptr<Texture> ResourceManager::loadTexture(const std::string& filePath) {
+Texture* ResourceManager::loadTexture(const std::string& filePath) {
     // Check if already loaded
     auto it = textures.find(filePath);
     if (it != textures.end()) {
-        std::cout << "Texture already loaded (sharing): " << filePath << std::endl;
+        it->second->refCount++;
+        std::cout << "Texture already loaded (sharing): " << filePath 
+                  << " (refCount: " << it->second->refCount << ")" << std::endl;
         return it->second;
     }
     
@@ -91,18 +93,40 @@ std::shared_ptr<Texture> ResourceManager::loadTexture(const std::string& filePat
     stbi_image_free(data);
     
     // Create texture object
-    auto texture = std::make_shared<Texture>(textureID, width, height, channels, filePath);
+    Texture* texture = new Texture(textureID, width, height, channels, filePath);
     
     // Store in cache
     textures[filePath] = texture;
     
     std::cout << "Texture loaded successfully: " << filePath 
-              << " (" << width << "x" << height << ", " << channels << " channels)" << std::endl;
+              << " (" << width << "x" << height << ", " << channels << " channels)" 
+              << " (refCount: 1)" << std::endl;
     
     return texture;
 }
 
-std::shared_ptr<Texture> ResourceManager::getTexture(const std::string& filePath) {
+void ResourceManager::releaseTexture(const std::string& filePath) {
+    auto it = textures.find(filePath);
+    if (it != textures.end()) {
+        it->second->refCount--;
+        std::cout << "Texture released: " << filePath 
+                  << " (refCount: " << it->second->refCount << ")" << std::endl;
+        
+        if (it->second->refCount <= 0) {
+            glDeleteTextures(1, &it->second->id);
+            delete it->second;
+            textures.erase(it);
+            std::cout << "Texture deleted: " << filePath << std::endl;
+        }
+    }
+}
+
+void ResourceManager::releaseTexture(Texture* texture) {
+    if (!texture) return;
+    releaseTexture(texture->path);
+}
+
+Texture* ResourceManager::getTexture(const std::string& filePath) {
     auto it = textures.find(filePath);
     if (it != textures.end()) {
         return it->second;
@@ -110,26 +134,12 @@ std::shared_ptr<Texture> ResourceManager::getTexture(const std::string& filePath
     return nullptr;
 }
 
-void ResourceManager::unloadTexture(const std::string& filePath) {
-    auto it = textures.find(filePath);
-    if (it != textures.end()) {
-        // Check if texture is still referenced elsewhere
-        if (it->second.use_count() == 1) {
-            glDeleteTextures(1, &it->second->id);
-            std::cout << "Texture unloaded: " << filePath << std::endl;
-        } else {
-            std::cout << "Texture still in use, not deleting: " << filePath 
-                      << " (references: " << it->second.use_count() << ")" << std::endl;
-        }
-        textures.erase(it);
-    }
-}
-
 void ResourceManager::unloadAllTextures() {
     for (auto& pair : textures) {
-        if (pair.second && pair.second->id != 0) {
+        if (pair.second) {
             glDeleteTextures(1, &pair.second->id);
             std::cout << "Texture unloaded: " << pair.first << std::endl;
+            delete pair.second;
         }
     }
     textures.clear();
@@ -142,12 +152,18 @@ bool ResourceManager::isTextureLoaded(const std::string& filePath) const {
 void ResourceManager::cleanupUnusedTextures() {
     auto it = textures.begin();
     while (it != textures.end()) {
-        if (it->second.use_count() == 1) {  // Only this map holds reference
+        if (it->second->refCount <= 0) {
             glDeleteTextures(1, &it->second->id);
             std::cout << "Cleaned up unused texture: " << it->first << std::endl;
+            delete it->second;
             it = textures.erase(it);
         } else {
             ++it;
         }
     }
+}
+
+// Static cleanup function
+void cleanupResourceManager() {
+    delete ResourceManager::getInstance();
 }
