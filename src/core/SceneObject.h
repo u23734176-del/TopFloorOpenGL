@@ -2,7 +2,7 @@
 #define SCENEOBJECT_H
 
 #include "../lighting/LightSet.h"
-#include "Collision.h"
+#include "../physics/Collision.h"
 #include "ResourceManager.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

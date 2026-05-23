@@ -1,5 +1,5 @@
 #include "ResourceManager.h"
-#include "stb_image.h"
+#include "../../stb_image.h"
 #include <iostream>
 #include <cstdio>
 
