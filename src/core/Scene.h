@@ -23,6 +23,8 @@ class Scene {
                             const glm::mat4& projection,
                             const LightSet& lights);
         
+        void drawDepthAllObjects(GLuint depthShaderProgram);
+        
 };
 
 #endif

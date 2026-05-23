@@ -34,6 +34,9 @@ class Camera {
         glm::vec3 getPosition();
         void resetMouse();
         float getRoll();
+
+        float getYaw();
+        float getPitch();
 };
 
 #endif
