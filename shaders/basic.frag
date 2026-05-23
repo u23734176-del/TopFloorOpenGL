@@ -2,6 +2,7 @@
 
 in vec3 FragPos;
 in vec3 Normal;
+in vec4 FragPosLightSpace;
 
 out vec4 FragColor;
 
@@ -46,12 +47,47 @@ uniform bool spotlightEnabled;
 
 uniform bool isNight;
 uniform vec3 cameraPos;
+uniform sampler2D shadowMap;
 
 // === Material properties (default) ===
 uniform vec3 objectColor = vec3(0.5, 0.5, 0.5);
 uniform float shininess = 32.0;
 
+
+// PCF Shadow Calculation
 // =====================================
+float calcShadow(vec4 fragPosLightSpace, vec3 norm, vec3 lightDir)
+{
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
+
+    if (projCoords.z > 1.0)
+    {
+        return 0.0;
+    }
+
+    float currentDepth = projCoords.z;
+    float bias = max(0.005 * (1.0 - dot(norm, lightDir)), 0.0015);
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+
+    float shadow = 0.0;
+    for (int x = -1; x <= 1; ++x)
+    {
+        for (int y = -1; y <= 1; ++y)
+        {
+            float closestDepth = texture(
+                shadowMap,
+                projCoords.xy + vec2(x, y) * texelSize
+            ).r;
+            shadow += currentDepth - bias > closestDepth ? 1.0 : 0.0;
+        }
+    }
+
+    return shadow / 9.0;
+}
+
+// =====================================
+
 // Blinn-Phong Calculation for Directional Light
 // =====================================
 vec3 calcDirectionalLight(DirectionalLight light, vec3 norm, vec3 viewDir)
@@ -140,12 +176,14 @@ void main()
 {
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(cameraPos - FragPos);
+    vec3 sunDir = normalize(-directional.direction);
+    float shadow = calcShadow(FragPosLightSpace, norm, sunDir);
     
     // === Start with ambient ===
     vec3 result = ambient * objectColor;
     
-    // === Add directional light (sun/moon) ===
-    result += calcDirectionalLight(directional, norm, viewDir);
+    // === Add directional light (sun/moon), shadowed by the depth map ===
+    result += (1.0 - shadow) * calcDirectionalLight(directional, norm, viewDir);
     
     // === Add point lights (only at night) ===
     if (isNight) {

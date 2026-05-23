@@ -15,6 +15,7 @@
 #include "core/Camera.h"
 #include "core/ShaderManager.h"
 #include "lighting/LightSet.h"
+#include "lighting/shadowMap.h"
 #include "objects/Cube.h"
 #include "objects/Floor.h"
 #include "objects/Wall.h"
@@ -29,6 +30,8 @@
 
 const int WIDTH = 1000;
 const int HEIGHT = 800;
+const unsigned int SHADOW_WIDTH = 2048;
+const unsigned int SHADOW_HEIGHT = 2048;
 
 const char *getError()
 {
@@ -65,7 +68,7 @@ inline GLFWwindow *setUp(int width, int height)
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     
-    GLFWwindow *window = glfwCreateWindow(width, height, "TopFloor — OpenGL Golf", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(width, height, "TopFloor â€” OpenGL Golf", NULL, NULL);
     if (window == NULL)
     {
         std::cout << getError() << std::endl;
@@ -80,26 +83,16 @@ inline GLFWwindow *setUp(int width, int height)
     return window;
 }
 
-// =====================================
-// Update Day/Night Lighting
-// =====================================
 void updateLightingForDayNight(LightSet& lights, bool isNight)
 {
     lights.isNight = isNight;
     
     if (isNight) {
-        // ===== NIGHT MODE =====
-        // Moon instead of sun
         lights.directional.direction = glm::normalize(glm::vec3(0.5f, -0.6f, 0.3f));
-        lights.directional.color = glm::vec3(0.6f, 0.6f, 0.8f);  // cool blue moonlight
-        
-        // Ambient: dark blue night sky
+        lights.directional.color = glm::vec3(0.6f, 0.6f, 0.8f);
         lights.ambient = glm::vec3(0.05f, 0.05f, 0.15f);
-        
-        // Enable point lights (path lights, building lights, etc.)
         lights.numPointLights = 3;
         
-        // Warm path light 1
         lights.pointLights[0].position = glm::vec3(5.0f, 1.5f, -10.0f);
         lights.pointLights[0].color = glm::vec3(1.0f, 0.8f, 0.4f);
         lights.pointLights[0].intensity = 0.8f;
@@ -107,7 +100,6 @@ void updateLightingForDayNight(LightSet& lights, bool isNight)
         lights.pointLights[0].linear = 0.09f;
         lights.pointLights[0].quadratic = 0.032f;
         
-        // Warm path light 2
         lights.pointLights[1].position = glm::vec3(-5.0f, 1.5f, -5.0f);
         lights.pointLights[1].color = glm::vec3(1.0f, 0.8f, 0.5f);
         lights.pointLights[1].intensity = 0.7f;
@@ -115,7 +107,6 @@ void updateLightingForDayNight(LightSet& lights, bool isNight)
         lights.pointLights[1].linear = 0.09f;
         lights.pointLights[1].quadratic = 0.032f;
         
-        // Cool accent light
         lights.pointLights[2].position = glm::vec3(0.0f, 2.0f, -15.0f);
         lights.pointLights[2].color = glm::vec3(0.4f, 0.6f, 1.0f);
         lights.pointLights[2].intensity = 0.5f;
@@ -124,29 +115,21 @@ void updateLightingForDayNight(LightSet& lights, bool isNight)
         lights.pointLights[2].quadratic = 0.017f;
         
     } else {
-        // ===== DAY MODE =====
-        // Sun high in sky
         lights.directional.direction = glm::normalize(glm::vec3(-0.3f, -0.9f, -0.2f));
-        lights.directional.color = glm::vec3(1.0f, 0.95f, 0.8f);  // warm daylight
-        
-        // Bright white ambient (sky)
+        lights.directional.color = glm::vec3(1.0f, 0.95f, 0.8f);
         lights.ambient = glm::vec3(0.4f, 0.42f, 0.45f);
-        
-        // Disable point lights during day
         lights.numPointLights = 0;
     }
 }
 
 inline void handleInput(GLFWwindow*& window, float& rotationX, float& rotationY, float deltaTime, bool& isNight, LightSet& lights)
 {
-    // Close window
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
         glfwSetWindowShouldClose(window, 1);
     }
 
     float rotationSpeed = 2.0f * deltaTime;
 
-    // Rotate left/right
     if(glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS){
         rotationY -= rotationSpeed;
     }
@@ -155,7 +138,6 @@ inline void handleInput(GLFWwindow*& window, float& rotationX, float& rotationY,
         rotationY += rotationSpeed;
     }
 
-    // Rotate up/down
     if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
         rotationX -= rotationSpeed;
     }
@@ -164,7 +146,6 @@ inline void handleInput(GLFWwindow*& window, float& rotationX, float& rotationY,
         rotationX += rotationSpeed;
     }
     
-    // Day/Night toggle (N key)
     static bool nKeyPressed = false;
     if(glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS && !nKeyPressed) {
         nKeyPressed = true;
@@ -177,22 +158,16 @@ inline void handleInput(GLFWwindow*& window, float& rotationX, float& rotationY,
     }
 }
 
-// =====================================
-// Pass Lighting Uniforms to Shader
-// =====================================
 void passLightingUniforms(GLuint shaderProgram, const LightSet& lights, const glm::vec3& cameraPos)
 {
-    // === Directional Light ===
     glUniform3f(glGetUniformLocation(shaderProgram, "directional.direction"),
                 lights.directional.direction.x, lights.directional.direction.y, lights.directional.direction.z);
     glUniform3f(glGetUniformLocation(shaderProgram, "directional.color"),
                 lights.directional.color.x, lights.directional.color.y, lights.directional.color.z);
     
-    // === Ambient ===
     glUniform3f(glGetUniformLocation(shaderProgram, "ambient"),
                 lights.ambient.x, lights.ambient.y, lights.ambient.z);
     
-    // === Point Lights ===
     glUniform1i(glGetUniformLocation(shaderProgram, "numPointLights"), lights.numPointLights);
     for (int i = 0; i < lights.numPointLights; ++i) {
         std::string base = "pointLights[" + std::to_string(i) + "]";
@@ -211,7 +186,6 @@ void passLightingUniforms(GLuint shaderProgram, const LightSet& lights, const gl
                     lights.pointLights[i].quadratic);
     }
     
-    // === Spotlight ===
     glUniform3f(glGetUniformLocation(shaderProgram, "spotlight.position"),
                 lights.spotlight.position.x, lights.spotlight.position.y, lights.spotlight.position.z);
     glUniform3f(glGetUniformLocation(shaderProgram, "spotlight.direction"),
@@ -227,10 +201,28 @@ void passLightingUniforms(GLuint shaderProgram, const LightSet& lights, const gl
     glUniform1i(glGetUniformLocation(shaderProgram, "spotlightEnabled"),
                 lights.spotlightEnabled ? 1 : 0);
     
-    // === Day/Night & Camera ===
     glUniform1i(glGetUniformLocation(shaderProgram, "isNight"), lights.isNight ? 1 : 0);
     glUniform3f(glGetUniformLocation(shaderProgram, "cameraPos"),
                 cameraPos.x, cameraPos.y, cameraPos.z);
+}
+
+glm::mat4 calculateLightSpaceMatrix(const LightSet& lights)
+{
+    glm::vec3 sceneCenter(0.0f, 0.0f, -8.0f);
+    glm::vec3 lightPosition = sceneCenter - lights.directional.direction * 35.0f;
+    glm::mat4 lightView = glm::lookAt(
+        lightPosition,
+        sceneCenter,
+        glm::vec3(0.0f, 1.0f, 0.0f)
+    );
+
+    glm::mat4 lightProjection = glm::ortho(
+        -35.0f, 35.0f,
+        -35.0f, 35.0f,
+        1.0f, 90.0f
+    );
+
+    return lightProjection * lightView;
 }
 
 int main()
@@ -251,21 +243,23 @@ int main()
         return -1;
     }
 
-    // Enable depth testing
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    // ===== LOAD SHADERS =====
     ShaderManager::load("basic", "shaders/basic.vert", "shaders/basic.frag");
+    ShaderManager::load("shadow_depth", "shaders/shadow_depth.vert", "shaders/shadow_depth.frag");
 
-    // Camera
+    ShadowMap shadowMap;
+    if (!shadowMap.init(SHADOW_WIDTH, SHADOW_HEIGHT))
+    {
+        std::cerr << "Failed to initialize shadow map." << std::endl;
+        return -1;
+    }
+
     Camera camera;
-
-    // Scene
     Scene scene;
 
-    // Objects
     Cube cube1;
     cube1.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     cube1.setColor(glm::vec3(1.0f, 0.0f, 0.0f));
@@ -284,13 +278,11 @@ int main()
     scene.addObject(&cube2);
     scene.addObject(&cube3);
 
-    // Floor
     Floor ground;
     ground.setPosition(glm::vec3(0.0f, -2.0f, 0.0f));
     ground.setColor(glm::vec3(0.1f, 0.6f, 0.1f));
     scene.addObject(&ground);
 
-    // Obstacles
     Cube obstacle;
     obstacle.setPosition(glm::vec3(3.0f, 0.0f, -5.0f));
     obstacle.setScale(glm::vec3(1.0f, 3.0f, 1.0f));
@@ -328,66 +320,74 @@ int main()
     ball.setPosition(glm::vec3(0.0f, -1.0f, 5.0f));
     scene.addObject(&ball);
 
-    // Build all scene objects
     scene.build();
 
-    // ===== LIGHTING SETUP =====
     LightSet lights;
-    updateLightingForDayNight(lights, isNight);  // Start in day mode
+    updateLightingForDayNight(lights, isNight);
     
-    // Print initial mode
     std::cout << "=== TopFloor Golf - Lighting System ===" << std::endl;
     std::cout << "Press 'N' to toggle Day/Night" << std::endl;
     std::cout << "Current mode: Day" << std::endl;
 
-    // Timing
     float lastFrame = 0.0f;
 
-    // =========================
-    // Render Loop
-    // =========================
     while (!glfwWindowShouldClose(window))
     {
-        // Time calculations
         float currentFrame = glfwGetTime();
         float deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // Input
         handleInput(window, rotationX, rotationY, deltaTime, isNight, lights);
         camera.processInput(window, deltaTime);
 
-        // Clear screen
-        glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // Matrices
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = camera.getProjectionMatrix(WIDTH, HEIGHT);
 
-        // Update cube rotation
         cube1.setRotation(glm::vec3(
             glm::degrees(rotationX),
             glm::degrees(rotationY),
             0.0f
         ));
+
+        glm::mat4 lightSpaceMatrix = calculateLightSpaceMatrix(lights);
+
+        GLuint depthShader = ShaderManager::get("shadow_depth");
+        glUseProgram(depthShader);
+        glUniformMatrix4fv(
+            glGetUniformLocation(depthShader, "lightSpaceMatrix"),
+            1,
+            GL_FALSE,
+            &lightSpaceMatrix[0][0]
+        );
+
+        shadowMap.beginDepthPass();
+        scene.drawDepthAllObjects(depthShader);
+        shadowMap.endDepthPass(WIDTH, HEIGHT);
+
+        glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        // Get the shader program
         GLuint shaderProgram = ShaderManager::get("basic");
         glUseProgram(shaderProgram);
         
-        // Pass lighting uniforms
         passLightingUniforms(shaderProgram, lights, camera.getPosition());
+        glUniformMatrix4fv(
+            glGetUniformLocation(shaderProgram, "lightSpaceMatrix"),
+            1,
+            GL_FALSE,
+            &lightSpaceMatrix[0][0]
+        );
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, shadowMap.getDepthTexture());
+        glUniform1i(glGetUniformLocation(shaderProgram, "shadowMap"), 1);
         
-        // Draw scene
         scene.drawAllObjects(view, projection, lights);
 
-        // Swap buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // Cleanup
     glfwDestroyWindow(window);
     glfwTerminate();
 

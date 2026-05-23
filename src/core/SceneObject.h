@@ -3,29 +3,28 @@
 
 #include "../lighting/LightSet.h"
 
+#include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 class SceneObject
 {
 protected:
-
     glm::vec3 position;
     glm::vec3 rotation;
     glm::vec3 scale;
-
     glm::vec3 color;
 
 public:
-
     SceneObject()
     {
         position = glm::vec3(0.0f);
         rotation = glm::vec3(0.0f);
         scale = glm::vec3(1.0f);
-
         color = glm::vec3(1.0f);
     }
+
+    virtual ~SceneObject() {}
 
     virtual void build() = 0;
 
@@ -35,9 +34,7 @@ public:
         const LightSet& lights
     ) = 0;
 
-    // =========================================
-    // TRANSFORMS
-    // =========================================
+    virtual void drawDepth(GLuint depthShaderProgram) = 0;
 
     void setPosition(glm::vec3 p)
     {
@@ -54,10 +51,6 @@ public:
         scale = s;
     }
 
-    // =========================================
-    // COLOR
-    // =========================================
-
     void setColor(glm::vec3 c)
     {
         color = c;
@@ -67,10 +60,6 @@ public:
     {
         return color;
     }
-
-    // =========================================
-    // MODEL MATRIX
-    // =========================================
 
     glm::mat4 getModelMatrix()
     {

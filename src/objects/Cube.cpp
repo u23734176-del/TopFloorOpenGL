@@ -63,14 +63,10 @@ float vertices[] = {
 
 void Cube::build()
 {
-    // Generate buffers
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
 
-    // Bind VAO
     glBindVertexArray(vao);
-
-    // Bind VBO
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
     glBufferData(
@@ -80,7 +76,6 @@ void Cube::build()
         GL_STATIC_DRAW
     );
 
-    // Position attribute
     glVertexAttribPointer(
         0,
         3,
@@ -91,7 +86,6 @@ void Cube::build()
     );
     glEnableVertexAttribArray(0);
 
-    // Normal attribute
     glVertexAttribPointer(
         1,
         3,
@@ -102,7 +96,6 @@ void Cube::build()
     );
     glEnableVertexAttribArray(1);
 
-    // Unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
@@ -113,48 +106,34 @@ void Cube::draw(
     const LightSet& lights
 )
 {
-    // Use the shared shader from ShaderManager (NOT a local one)
     GLuint shaderProgram = ShaderManager::get("basic");
     glUseProgram(shaderProgram);
 
-    // =========================================
-    // Model Matrix
     glm::mat4 model = getModelMatrix();
-    // Uniforms
-    // =========================================
 
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
     GLuint viewLoc  = glGetUniformLocation(shaderProgram, "view");
     GLuint projLoc  = glGetUniformLocation(shaderProgram, "projection");
     GLuint colorLoc = glGetUniformLocation(shaderProgram, "objectColor");
 
-    glUniformMatrix4fv(
-        modelLoc,
-        1,
-        GL_FALSE,
-        &model[0][0]
-    );
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, &proj[0][0]);
 
-    glUniformMatrix4fv(
-        viewLoc,
-        1,
-        GL_FALSE,
-        &view[0][0]
-    );
+    glUniform3f(colorLoc, color.x, color.y, color.z);
 
-    glUniformMatrix4fv(
-        projLoc,
-        1,
-        GL_FALSE,
-        &proj[0][0]
-    );
+    glBindVertexArray(vao);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+}
 
-    // Set object color (bright green)
-    glUniform3f(colorLoc, 0.2f, 0.8f, 0.3f);
+void Cube::drawDepth(GLuint depthShaderProgram)
+{
+    glUseProgram(depthShaderProgram);
 
-    // =========================================
-    // Draw
-    // =========================================
+    glm::mat4 model = getModelMatrix();
+    GLuint modelLoc = glGetUniformLocation(depthShaderProgram, "model");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
 
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, 36);
