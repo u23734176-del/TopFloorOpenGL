@@ -7,7 +7,10 @@ src/core/shader.cpp \
 src/core/SceneObject.cpp \
 src/core/ResourceManager.cpp \
 src/objects/Cube.cpp \
-stb_image.cpp 
+stb_image.cpp \
+src/lighting/shadowMap.cpp \
+src/ui/HUD.cpp \
+src/ui/PostProcessor.cpp \
 
 main: src/main.cpp src/glad.c
 	g++ -std=c++11 -g $(files) src/main.cpp src/glad.c -lglfw3 -pthread -lGLEW -ldl -lGL -o main

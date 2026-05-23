@@ -38,59 +38,6 @@ public:
 
     virtual void drawDepth(GLuint depthShaderProgram) = 0;
 
-    void setPosition(glm::vec3 p)
-    {
-        position = p;
-    }
-
-    void setRotation(glm::vec3 r)
-    {
-        rotation = r;
-    }
-
-    void setScale(glm::vec3 s)
-    {
-        scale = s;
-    }
-
-    void setColor(glm::vec3 c)
-    {
-        color = c;
-    }
-
-    glm::vec3 getColor()
-    {
-        return color;
-    }
-
-    glm::mat4 getModelMatrix()
-    {
-        glm::mat4 model = glm::mat4(1.0f);
-
-        model = glm::translate(model, position);
-
-        model = glm::rotate(
-            model,
-            glm::radians(rotation.x),
-            glm::vec3(1.0f, 0.0f, 0.0f)
-        );
-
-        model = glm::rotate(
-            model,
-            glm::radians(rotation.y),
-            glm::vec3(0.0f, 1.0f, 0.0f)
-        );
-
-        model = glm::rotate(
-            model,
-            glm::radians(rotation.z),
-            glm::vec3(0.0f, 0.0f, 1.0f)
-        );
-
-        model = glm::scale(model, scale);
-
-        return model;
-    }
     void setPosition(glm::vec3 p);
     void setRotation(glm::vec3 r);
     void setScale(glm::vec3 s);
@@ -105,11 +52,11 @@ public:
     void releaseTexture();
     
     // Get texture for binding
-    Texture* getTexture() const { return texture; }
-    bool hasTextureEnabled() const { return hasTexture; }
+    Texture* getTexture() const;
+    bool hasTextureEnabled() const;
     
     // For AABB
-    AABB getLocalAABB() const { return aabb; }
+    AABB getLocalAABB() const;
     AABB getWorldAABB() const;
     
 protected:
