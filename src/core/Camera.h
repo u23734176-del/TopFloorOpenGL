@@ -29,6 +29,7 @@ class Camera {
         glm::mat4 getViewMatrix();
         glm::mat4 getProjectionMatrix(float width, float height);
 
+        void setFirstPerson(const glm::vec3& pos, const glm::vec3& droneF);
         void processInput(GLFWwindow* window, float deltaTime);
         void processMouseMovement(float xpos, float ypos);
         glm::vec3 getPosition();
@@ -37,6 +38,8 @@ class Camera {
 
         float getYaw();
         float getPitch();
+        void followTarget(const glm::vec3& targetPos, const glm::vec3& targetFront, float rollDeg);
+
 };
 
 #endif
