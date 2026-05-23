@@ -26,6 +26,12 @@
 #include "objects/Flag.h"
 #include "objects/Windmill.h"
 
+// Post Processor 
+#include "ui/PostProcessor.h"
+
+// HUD 
+#include "ui/HUD.h"
+
 const int WIDTH = 1000;
 const int HEIGHT = 800;
 
@@ -77,7 +83,7 @@ inline GLFWwindow *setUp(int width, int height)
     return window;
 }
 
-inline void handleInput(GLFWwindow*& window, float& rotationX, float& rotationY, float deltaTime) {
+inline void handleInput(GLFWwindow*& window, float& rotationX, float& rotationY, float deltaTime, PostProcessor& postProcessor) {
     // Close window
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
         glfwSetWindowShouldClose(window, 1);
@@ -101,6 +107,21 @@ inline void handleInput(GLFWwindow*& window, float& rotationX, float& rotationY,
 
     if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
         rotationX += rotationSpeed;
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_8) == GLFW_PRESS)
+    {
+        postProcessor.setMode(0);
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS)
+    {
+        postProcessor.setMode(1);
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
+    {
+        postProcessor.setMode(2);
     }
 }
 
@@ -126,6 +147,14 @@ int main()
 
     // Camera
     Camera camera;
+
+    // PostProcessor
+    PostProcessor postProcessor;
+    postProcessor.build(WIDTH, HEIGHT);
+
+    // HUD
+    HUD hud;
+    hud.build();
 
     // Scene
     Scene scene;
@@ -222,27 +251,14 @@ int main()
         lastFrame = currentFrame;
 
         // Input
-        handleInput(window, rotationX, rotationY, deltaTime);
+        handleInput(window, rotationX, rotationY, deltaTime, postProcessor);
         camera.processInput(window, deltaTime);
 
         // Clear screen
+        postProcessor.beginRender();
+
         glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // Rotation 
-        // glm::mat4 model = glm::mat4(1.0f);
-
-        // model = glm::rotate(
-        //     model,
-        //     rotationX,
-        //     glm::vec3(1.0f, 0.0f, 0.0f)
-        // );
-
-        // model = glm::rotate(
-        //     model,
-        //     rotationY,
-        //     glm::vec3(0.0f, 1.0f, 0.0f)
-        // );
 
         // Matrices
         glm::mat4 view = camera.getViewMatrix();
@@ -256,6 +272,40 @@ int main()
         )); 
         // Draw scene
         scene.drawAllObjects(view, projection, lights);
+
+        // PostProcessor 
+        postProcessor.endRender();
+
+        postProcessor.draw();
+
+        /// HUD
+        hud.draw(camera, WIDTH, HEIGHT, postProcessor.getMode());
+
+        // =========================
+        // Window HUD Text
+        // =========================
+
+        glm::vec3 camPos = camera.getPosition();
+
+        std::string modeText = "Normal";
+
+        if(postProcessor.getMode() == 1)
+        {
+            modeText = "Grayscale";
+        }
+        else if(postProcessor.getMode() == 2)
+        {
+            modeText = "Inverted";
+        }
+
+        std::string title =
+            "Mini Golf | "
+            "X: " + std::to_string(camPos.x) +
+            " Y: " + std::to_string(camPos.y) +
+            " Z: " + std::to_string(camPos.z) +
+            " | Filter: " + modeText;
+
+        glfwSetWindowTitle(window, title.c_str());
 
         // Swap buffers
         glfwSwapBuffers(window);

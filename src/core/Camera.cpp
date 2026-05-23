@@ -147,3 +147,13 @@ float Camera::getRoll()
 {
     return this->roll;
 }
+
+float Camera::getYaw()
+{
+    return this->yaw;
+}
+
+float Camera::getPitch()
+{
+    return this->pitch;
+}
