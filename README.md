@@ -15,7 +15,6 @@
 - **No inline implementation in headers** — bodies go in `.cpp`.
 - **Blender** = individual objects only. C++ must combine them. No whole-course Blender render.
 - **Doesn't compile → 0. Doesn't exit cleanly → 0.** Test both before submitting.
-- **No AI-generated submitted code.** Plagiarism software runs on everything.
 - Submit archive (Makefile + compile instructions) to **ClickUp**, upload to **FitchFork** at demo.
 
 ---

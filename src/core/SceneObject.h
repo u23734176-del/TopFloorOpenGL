@@ -2,31 +2,30 @@
 #define SCENEOBJECT_H
 
 #include "../lighting/LightSet.h"
-
+#include "Collision.h"
+#include "ResourceManager.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <vector>
 
 class SceneObject
 {
 protected:
-
     glm::vec3 position;
     glm::vec3 rotation;
     glm::vec3 scale;
-
     glm::vec3 color;
+    AABB aabb;
+    
+    // Texture handling (raw pointer with manual ref counting)
+    Texture* texture;
+    bool hasTexture;
+    std::string texturePath;
 
 public:
-
-    SceneObject()
-    {
-        position = glm::vec3(0.0f);
-        rotation = glm::vec3(0.0f);
-        scale = glm::vec3(1.0f);
-
-        color = glm::vec3(1.0f);
-    }
-
+    SceneObject();
+    virtual ~SceneObject();
+    
     virtual void build() = 0;
 
     virtual void draw(
@@ -35,71 +34,31 @@ public:
         const LightSet& lights
     ) = 0;
 
-    // =========================================
-    // TRANSFORMS
-    // =========================================
-
-    void setPosition(glm::vec3 p)
-    {
-        position = p;
-    }
-
-    void setRotation(glm::vec3 r)
-    {
-        rotation = r;
-    }
-
-    void setScale(glm::vec3 s)
-    {
-        scale = s;
-    }
-
-    // =========================================
-    // COLOR
-    // =========================================
-
-    void setColor(glm::vec3 c)
-    {
-        color = c;
-    }
-
-    glm::vec3 getColor()
-    {
-        return color;
-    }
-
-    // =========================================
-    // MODEL MATRIX
-    // =========================================
-
-    glm::mat4 getModelMatrix()
-    {
-        glm::mat4 model = glm::mat4(1.0f);
-
-        model = glm::translate(model, position);
-
-        model = glm::rotate(
-            model,
-            glm::radians(rotation.x),
-            glm::vec3(1.0f, 0.0f, 0.0f)
-        );
-
-        model = glm::rotate(
-            model,
-            glm::radians(rotation.y),
-            glm::vec3(0.0f, 1.0f, 0.0f)
-        );
-
-        model = glm::rotate(
-            model,
-            glm::radians(rotation.z),
-            glm::vec3(0.0f, 0.0f, 1.0f)
-        );
-
-        model = glm::scale(model, scale);
-
-        return model;
-    }
+    void setPosition(glm::vec3 p);
+    void setRotation(glm::vec3 r);
+    void setScale(glm::vec3 s);
+    void setColor(glm::vec3 c);
+    glm::vec3 getColor() const;
+    glm::mat4 getModelMatrix() const;
+    
+    // Texture loading (uses ResourceManager)
+    bool loadTexture(const std::string& filePath);
+    
+    // Release texture
+    void releaseTexture();
+    
+    // Get texture for binding
+    Texture* getTexture() const { return texture; }
+    bool hasTextureEnabled() const { return hasTexture; }
+    
+    // For AABB
+    AABB getLocalAABB() const { return aabb; }
+    AABB getWorldAABB() const;
+    
+protected:
+    // Helper for initializing AABB
+    void initAABBFromVertices(const std::vector<glm::vec3>& vertices);
+    void initAABBFromPrimitive(const glm::vec3& halfExtents);
 };
 
 #endif
