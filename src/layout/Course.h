@@ -2,10 +2,10 @@
 #define COURSE_H
 
 #include "../core/SceneObject.h"
-#include "GolfHole.h"
-#include "Rock.h"
-#include "Tunnel.h"
-#include "Windmill.h"
+#include "../objects/GolfHole.h"
+#include "../objects/Rock.h"
+#include "../objects/Tunnel.h"
+#include "../objects/Windmill.h"
 
 #include <vector>
 

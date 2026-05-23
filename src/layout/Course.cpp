@@ -167,13 +167,13 @@ void Course::setupHole8()
     h.setPosition(glm::vec3(-5.0f, 0.0f, -28.0f));
     h.setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
 
-    // Windmill lives near this hole
-    windmill.towerRadius  = 0.5f;
-    windmill.towerHeight  = 4.0f;
-    windmill.bladeLength  = 2.0f;
-    windmill.bladeWidth   = 0.35f;
-    windmill.setPosition(glm::vec3(0.0f, 0.0f, -24.0f));
-    windmill.setRotation(glm::vec3(0.0f, 30.0f, 0.0f));
+    // // Windmill lives near this hole
+    // windmill.towerRadius  = 0.5f;
+    // windmill.towerHeight  = 4.0f;
+    // windmill.bladeLength  = 2.0f;
+    // windmill.bladeWidth   = 0.35f;
+    // windmill.setPosition(glm::vec3(0.0f, 0.0f, -24.0f));
+    // windmill.setRotation(glm::vec3(0.0f, 30.0f, 0.0f));
 }
 
 void Course::setupHole9()
