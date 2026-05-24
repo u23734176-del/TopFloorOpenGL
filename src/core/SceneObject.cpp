@@ -149,3 +149,8 @@ void SceneObject::initAABBFromPrimitive(const glm::vec3& halfExtents) {
 AABB SceneObject::getLocalAABB() const { return aabb; }
 Texture* SceneObject::getTexture() const { return texture; }
 bool SceneObject::hasTextureEnabled() const { return hasTexture; }
+
+std::vector<AABB> SceneObject::getCollisionAABBs() const
+{
+    return {getWorldAABB()};
+}

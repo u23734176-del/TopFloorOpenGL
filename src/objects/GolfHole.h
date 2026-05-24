@@ -59,6 +59,8 @@ public:
               const LightSet&  lights) override;
     void drawDepth(GLuint depthShaderProgram) override;
 
+    std::vector<AABB> getCollisionAABBs() const override;
+
 private:
     // ---- GPU data ----
     // We pack everything into one VAO/VBO for simplicity
@@ -85,6 +87,8 @@ private:
     void buildSegment(std::vector<float>& turfBuf,
                       float cx, float cz,
                       float w,  float l, float rotY);
+
+    std::vector<AABB> wallBoxes;
 };
 
 #endif

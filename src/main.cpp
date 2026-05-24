@@ -29,6 +29,7 @@
 #include "objects/BenchTable.h"
 #include "objects/LightPost.h"
 #include "objects/BillBoard.h"
+#include "objects/AssimpModel.h"
 
 // Post Processor
 #include "ui/PostProcessor.h"
@@ -48,7 +49,19 @@ const unsigned int SHADOW_HEIGHT = 2048;
 // Course addToScene callback — must be at file scope (not inside main)
 // ---------------------------------------------------------------------------
 static Scene* g_scene = nullptr;
-static void addObjectToScene(SceneObject* obj) { g_scene->addObject(obj); }
+static PhysicsWorld *g_physics = nullptr;
+static void addObjectToScene(SceneObject *obj)
+{
+    g_scene->addObject(obj);
+    if (dynamic_cast<GolfHole *>(obj))
+    {
+        g_physics->addCollider(obj, Surface::TURF);
+    }
+    else
+    {
+        g_physics->addCollider(obj, Surface::SOLID);
+    }
+}
 
 // Write skybox faces in the easy order:
 // right, left, front, back, top, bottom.
@@ -217,10 +230,33 @@ glm::mat4 calculateLightSpaceMatrix(const LightSet& lights)
 // ---------------------------------------------------------------------------
 // Input
 // ---------------------------------------------------------------------------
-inline void handleInput(GLFWwindow*& window, float deltaTime,
-                        PostProcessor& postProcessor,
-                        bool& isNight, LightSet& lights)
+inline void handleInput(GLFWwindow *&window, float deltaTime,
+                        PostProcessor &postProcessor,
+                        bool &isNight, LightSet &lights, Camera &camera, BallPhysics &ballState)
 {
+    static float lastPutt = 0.0f;
+    float currentFrame = glfwGetTime();
+
+    // Press Spacebar to putt the ball
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    {
+        if (currentFrame - lastPutt > 0.5f)
+        {
+            float yaw = glm::radians(camera.getYaw());
+            float pitch = glm::radians(camera.getPitch());
+            glm::vec3 front(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
+
+            glm::vec3 impulse = front;
+            impulse.y = 0.0f; // horizontal putt only
+            if (glm::length(impulse) > 0.001f)
+            {
+                impulse = glm::normalize(impulse) * 15.0f; // Adjust speed here
+                ballState.putt(impulse);
+                lastPutt = currentFrame;
+            }
+        }
+    }
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, 1);
 
@@ -320,68 +356,97 @@ int main()
     Scene scene;
     g_scene = &scene;
 
+    PhysicsWorld physicsWorld;
+    g_physics = &physicsWorld;
+    physicsWorld.setGroundLevel(0.0f); // Prevents ball falling through the world
+
+    SphereBall playableBall;
+    playableBall.setPosition(glm::vec3(8.0f, 0.5f, 32.0f)); // Start at Hole 1
+    scene.addObject(&playableBall);
+
+    BallPhysics ballState;
+    physicsWorld.setBall(&playableBall, &ballState);
+
     Course course;
     course.build();
     course.addToScene(addObjectToScene);
 
     // ==========================================================
-    // DECORATIONS & EXTERNAL OBJECTS
+    // DECORATIONS & EXTERNAL OBJECTS (ASSIMP)
     // ==========================================================
 
-    // 1. Palm Trees
-    PalmTree palm1, palm2;
-    palm1.setPosition(glm::vec3(5.0f, 0.0f, 28.0f)); // Near Hole 1
-    palm1.setScale(glm::vec3(1.5f));
+    // 1. Palm Trees (Multi-colored)
+    AssimpModel *palm1 = new AssimpModel("external/Palm_Tree.obj");
+    palm1->setPosition(glm::vec3(5.0f, 0.0f, 28.0f));
+    palm1->setScale(glm::vec3(1.5f));
+    palm1->build();                                                     // Build VRAM before coloring
+    palm1->setSubMeshColor("Cylinder", glm::vec3(0.45f, 0.28f, 0.15f)); // Trunk
+    palm1->setSubMeshColor("Plane", glm::vec3(0.15f, 0.5f, 0.15f));     // Leaves
+    scene.addObject(palm1);
 
-    palm2.setPosition(glm::vec3(-10.0f, 0.0f, -15.0f)); // Near lake/Hole 9
-    palm2.setScale(glm::vec3(1.2f));
-    palm2.setRotation(glm::vec3(0.0f, 45.0f, 0.0f));
+    AssimpModel *palm2 = new AssimpModel("external/Palm_Tree.obj");
+    palm2->setPosition(glm::vec3(-10.0f, 0.0f, -15.0f));
+    palm2->setScale(glm::vec3(1.2f));
+    palm2->setRotation(glm::vec3(0.0f, 45.0f, 0.0f));
+    palm2->build();
+    palm2->setSubMeshColor("Cylinder", glm::vec3(0.45f, 0.28f, 0.15f));
+    palm2->setSubMeshColor("Plane", glm::vec3(0.15f, 0.5f, 0.15f));
+    scene.addObject(palm2);
 
-    scene.addObject(&palm1);
-    scene.addObject(&palm2);
+    // 2. Bushes (Solid Green)
+    AssimpModel *bush1 = new AssimpModel("external/Bush.obj");
+    bush1->setPosition(glm::vec3(2.0f, 0.0f, 25.0f));
+    bush1->setScale(glm::vec3(0.8f));
+    bush1->build();
+    bush1->setSubMeshColor("", glm::vec3(0.1f, 0.4f, 0.1f)); // "" colors the whole object
+    scene.addObject(bush1);
 
-    // 2. Bushes
-    Bush bush1, bush2;
-    bush1.setPosition(glm::vec3(2.0f, 0.0f, 25.0f));
-    bush1.setScale(glm::vec3(0.8f));
+    AssimpModel *bush2 = new AssimpModel("external/Bush.obj");
+    bush2->setPosition(glm::vec3(22.0f, 0.0f, -28.0f));
+    bush2->build();
+    bush2->setSubMeshColor("", glm::vec3(0.15f, 0.45f, 0.15f)); // Slightly lighter green
+    scene.addObject(bush2);
 
-    bush2.setPosition(glm::vec3(22.0f, 0.0f, -28.0f));
-    bush2.setScale(glm::vec3(1.0f));
+    // 3. Bench Table Area (Solid Wood)
+    AssimpModel *table = new AssimpModel("external/Bench_Table.obj");
+    table->setPosition(glm::vec3(0.0f, 0.0f, 5.0f));
+    table->build();
+    table->setSubMeshColor("", glm::vec3(0.45f, 0.28f, 0.15f));
+    scene.addObject(table);
 
-    scene.addObject(&bush1);
-    scene.addObject(&bush2);
+    AssimpModel *chair1 = new AssimpModel("external/bench_Chair.obj");
+    chair1->setPosition(glm::vec3(0.0f, 0.0f, 3.5f));
+    chair1->build();
+    chair1->setSubMeshColor("", glm::vec3(0.45f, 0.28f, 0.15f));
+    scene.addObject(chair1);
 
-    // 3. Bench & Table Area (Spawn Point / Gazebo area)
-    BenchTable table;
-    table.setPosition(glm::vec3(0.0f, 0.0f, 5.0f));
-    table.setScale(glm::vec3(1.0f));
-    scene.addObject(&table);
+    AssimpModel *chair2 = new AssimpModel("external/bench_Chair.obj");
+    chair2->setPosition(glm::vec3(0.0f, 0.0f, 6.5f));
+    chair2->setRotation(glm::vec3(0.0f, 180.0f, 0.0f));
+    chair2->build();
+    chair2->setSubMeshColor("", glm::vec3(0.45f, 0.28f, 0.15f));
+    scene.addObject(chair2);
 
-    BenchChair chair1, chair2;
-    chair1.setPosition(glm::vec3(0.0f, 0.0f, 3.5f));
-    chair2.setPosition(glm::vec3(0.0f, 0.0f, 6.5f));
-    chair2.setRotation(glm::vec3(0.0f, 180.0f, 0.0f)); // Face the table
+    // 4. Light Post (Solid Grey/Metal)
+    AssimpModel *lamp = new AssimpModel("external/Light_post_2.obj");
+    lamp->setPosition(glm::vec3(3.0f, 0.0f, 5.0f));
+    lamp->build();
+    lamp->setSubMeshColor("", glm::vec3(0.3f, 0.3f, 0.35f));
+    lamp->setSubMeshColor("Cube.004", glm::vec3(1.0f, 1.0f, 0.0f));
+        scene.addObject(lamp);
+    lamp->printSubMeshes();
 
-    scene.addObject(&chair1);
-    scene.addObject(&chair2);
-
-    // 4. Light Post
-    LightPost lamp;
-    lamp.setPosition(glm::vec3(3.0f, 0.0f, 5.0f));
-    lamp.setScale(glm::vec3(1.0f));
-    scene.addObject(&lamp);
-
-    // 5. Billboard
-    BillBoard board;
-    board.setPosition(glm::vec3(-5.0f, 0.0f, 35.0f));
-    board.setRotation(glm::vec3(0.0f, -20.0f, 0.0f));
-    board.setScale(glm::vec3(1.5f));
-    scene.addObject(&board);
-
+    // 5. Billboard (Solid White/Grey canvas)
+    AssimpModel *board = new AssimpModel("external/BillBoard.obj");
+    board->setPosition(glm::vec3(-5.0f, 0.0f, 35.0f));
+    board->setRotation(glm::vec3(0.0f, -20.0f, 0.0f));
+    board->setScale(glm::vec3(1.5f));
+    board->build();
+    board->setSubMeshColor("", glm::vec3(0.8f, 0.8f, 0.8f));
+    scene.addObject(board);
     // ==========================================================
 
-    // Build the scene (This will now trigger the VAO/VBO upload for your StaticMeshes)
-    scene.build();
+    scene.build(); // This triggers Assimp to load the files into VRAM
 
     LightSet lights;
     updateLightingForDayNight(lights, isNight);
@@ -397,7 +462,8 @@ int main()
         float deltaTime    = currentFrame - lastFrame;
         lastFrame          = currentFrame;
 
-        handleInput(window, deltaTime, postProcessor, isNight, lights);
+        handleInput(window, deltaTime, postProcessor, isNight, lights, camera, ballState);
+        physicsWorld.update(deltaTime);
         camera.processInput(window, deltaTime);
 
         glm::mat4 view       = camera.getViewMatrix();

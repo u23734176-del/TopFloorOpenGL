@@ -17,6 +17,8 @@ src/objects/Rock.cpp \
 src/objects/Tunnel.cpp \
 src/objects/GolfHole.cpp \
 src/objects/StaticMesh.cpp \
+src/objects/AssimpModel.cpp \
+src/objects/SphereBall.cpp \
 src/layout/Course.cpp \
 skybox/skybox.cpp \
 src/objects/Windmill.cpp \
@@ -26,7 +28,7 @@ src/physics/BallPhysics.cpp \
 
 
 main: src/main.cpp src/glad.c
-	g++ -std=c++11 -g $(files) src/main.cpp src/glad.c -lglfw -pthread -lGLEW -ldl -lGL -o main
+	g++ -std=c++11 -g $(files) src/main.cpp src/glad.c -lglfw -pthread -lGLEW -lassimp -ldl -lGL -o main
 
 clean:
 	rm -f *.o main

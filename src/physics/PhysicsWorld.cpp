@@ -139,65 +139,63 @@ void PhysicsWorld::resolveCollisions(float dt)
     // --- static colliders ---------------------------------------------------
     for (const Collider &c : colliders)
     {
-        AABB box = c.obj->getWorldAABB();
-        s = ballSphere();
-        if (!intersects(s, box))
-            continue;
+        std::vector<AABB> boxes = c.obj->getCollisionAABBs();
 
-        // ---- CUP CAPTURE ---------------------------------------------------
-        // A cup-tagged collider sits at the hole. If the ball reaches it slowly
-        // enough, it drops and stops; if it is travelling too fast it lips out
-        // and is treated as a normal (bouncy) obstacle, just like real golf.
-        if (c.surface == Surface::CUP)
+        for (const AABB &box : boxes)
         {
-            glm::vec3 v = ballPhysics->getVelocity();
-            float horizSpeed = sqrtf(v.x * v.x + v.z * v.z);
-            if (horizSpeed <= cupCaptureSpeed)
+            s = ballSphere();
+            if (!intersects(s, box))
+                continue;
+
+            // ---- CUP CAPTURE ---------------------------------------------------
+            if (c.surface == Surface::CUP)
             {
-                glm::vec3 cupCentre = (box.min + box.max) * 0.5f;
-                cupCentre.y = box.min.y + s.radius; // rest at the bottom of the cup
-                ballPhysics->setPosition(cupCentre);
-                ballPhysics->setVelocity(glm::vec3(0.0f));
-                ballPhysics->setGrounded(true);
-                ballInCup = true;
-                return; // hole sunk -- nothing else to resolve this step
+                glm::vec3 v = ballPhysics->getVelocity();
+                float horizSpeed = sqrtf(v.x * v.x + v.z * v.z);
+                if (horizSpeed <= cupCaptureSpeed)
+                {
+                    glm::vec3 cupCentre = (box.min + box.max) * 0.5f;
+                    cupCentre.y = box.min.y + s.radius;
+                    ballPhysics->setPosition(cupCentre);
+                    ballPhysics->setVelocity(glm::vec3(0.0f));
+                    ballPhysics->setGrounded(true);
+                    ballInCup = true;
+                    return;
+                }
             }
-            // too fast: fall through and let it bounce off the rim like a solid
-        }
 
-        glm::vec3 normal = faceNormalFor(box, s.centre);
+            glm::vec3 normal = faceNormalFor(box, s.centre);
 
-        // Top-face contact = standing on it (acts like ground). Side faces =
-        // wall, bounce the ball off.
-        if (normal.y > 0.5f)
-        {
-            glm::vec3 p = ballPhysics->getPosition();
-            p.y = box.max.y + s.radius;
-            ballPhysics->setPosition(p);
-            glm::vec3 v = ballPhysics->getVelocity();
-            if (v.y < 0.0f)
-                v.y = 0.0f;
-            ballPhysics->setVelocity(v);
-            groundedThisStep = true;
-        }
-        else
-        {
-            // Push the ball out along the face normal so it no longer overlaps,
-            // then reflect its velocity (the bounce).
-            glm::vec3 closest;
-            closest.x = fmaxf(box.min.x, fminf(s.centre.x, box.max.x));
-            closest.y = fmaxf(box.min.y, fminf(s.centre.y, box.max.y));
-            closest.z = fmaxf(box.min.z, fminf(s.centre.z, box.max.z));
-            glm::vec3 d = s.centre - closest;
-            float dist = sqrtf(d.x * d.x + d.y * d.y + d.z * d.z);
-            float pen = s.radius - dist;
-            if (pen > 0.0f)
+            // Top-face contact = standing on it (acts like ground). Side faces = wall bounce.
+            if (normal.y > 0.5f)
             {
                 glm::vec3 p = ballPhysics->getPosition();
-                p += normal * pen; // depenetrate
+                p.y = box.max.y + s.radius;
                 ballPhysics->setPosition(p);
+                glm::vec3 v = ballPhysics->getVelocity();
+                if (v.y < 0.0f)
+                    v.y = 0.0f;
+                ballPhysics->setVelocity(v);
+                groundedThisStep = true;
             }
-            ballPhysics->reflect(normal, restitution);
+            else
+            {
+                // Depenetrate and reflect
+                glm::vec3 closest;
+                closest.x = fmaxf(box.min.x, fminf(s.centre.x, box.max.x));
+                closest.y = fmaxf(box.min.y, fminf(s.centre.y, box.max.y));
+                closest.z = fmaxf(box.min.z, fminf(s.centre.z, box.max.z));
+                glm::vec3 d = s.centre - closest;
+                float dist = sqrtf(d.x * d.x + d.y * d.y + d.z * d.z);
+                float pen = s.radius - dist;
+                if (pen > 0.0f)
+                {
+                    glm::vec3 p = ballPhysics->getPosition();
+                    p += normal * pen;
+                    ballPhysics->setPosition(p);
+                }
+                ballPhysics->reflect(normal, restitution);
+            }
         }
     }
 

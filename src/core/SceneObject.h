@@ -58,7 +58,10 @@ public:
     // For AABB
     AABB getLocalAABB() const;
     AABB getWorldAABB() const;
-    
+
+    // For complex objects to return granular hitboxes (like GolfHole walls)
+    virtual std::vector<AABB> getCollisionAABBs() const;
+
 protected:
     // Helper for initializing AABB
     void initAABBFromVertices(const std::vector<glm::vec3>& vertices);

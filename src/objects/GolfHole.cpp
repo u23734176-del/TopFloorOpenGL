@@ -73,6 +73,31 @@ void GolfHole::buildSegment(std::vector<float>& buf,
 
     glm::vec3 upN(0.0f, 1.0f, 0.0f);
 
+    auto addWallBox = [&](glm::vec3 minP, glm::vec3 maxP)
+    {
+        AABB b;
+        b.min = glm::vec3(1e30f);
+        b.max = glm::vec3(-1e30f);
+        glm::vec3 corners[8] = {
+            {minP.x, minP.y, minP.z}, {maxP.x, minP.y, minP.z}, {minP.x, maxP.y, minP.z}, {maxP.x, maxP.y, minP.z}, {minP.x, minP.y, maxP.z}, {maxP.x, minP.y, maxP.z}, {minP.x, maxP.y, maxP.z}, {maxP.x, maxP.y, maxP.z}};
+        for (int i = 0; i < 8; ++i)
+        {
+            glm::vec3 p = corners[i];
+            p = rotY(p, rotDeg);
+            p.x += cx;
+            p.z += cz;
+            b.min = glm::min(b.min, p);
+            b.max = glm::max(b.max, p);
+        }
+        wallBoxes.push_back(b);
+    };
+
+    // Calculate hitboxes for the 4 walls
+    addWallBox(glm::vec3(-hw - wt, 0.0f, -hl), glm::vec3(-hw, wh, hl));           // Left
+    addWallBox(glm::vec3(hw, 0.0f, -hl), glm::vec3(hw + wt, wh, hl));             // Right
+    addWallBox(glm::vec3(-hw - wt, 0.0f, -hl - wt), glm::vec3(hw + wt, wh, -hl)); // Back
+    addWallBox(glm::vec3(-hw - wt, 0.0f, hl), glm::vec3(hw + wt, wh, hl + wt));   // Front
+
     // ---- FLOOR ----
     // corners in local segment space, y = 0
     glm::vec3 fbl(-hw,  0.0f, -hl);
@@ -196,6 +221,8 @@ void GolfHole::buildSegment(std::vector<float>& buf,
 
 void GolfHole::build()
 {
+    wallBoxes.clear();
+    
     // ==== MAIN TURF + WALLS ====
     std::vector<float> turfBuf;
     buildSegment(turfBuf, 0.0f, 0.0f, holeWidth, holeLength, 0.0f);
@@ -375,4 +402,30 @@ void GolfHole::drawDepth(GLuint depthShader)
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, vertexCount);
     glBindVertexArray(0);
+}
+
+std::vector<AABB> GolfHole::getCollisionAABBs() const
+{
+    std::vector<AABB> worldBoxes;
+    glm::mat4 model = getModelMatrix();
+
+    for (const AABB &localBox : wallBoxes)
+    {
+        AABB w;
+        w.min = glm::vec3(1e30f);
+        w.max = glm::vec3(-1e30f);
+
+        glm::vec3 corners[8] = {
+            {localBox.min.x, localBox.min.y, localBox.min.z}, {localBox.max.x, localBox.min.y, localBox.min.z}, {localBox.min.x, localBox.max.y, localBox.min.z}, {localBox.max.x, localBox.max.y, localBox.min.z}, {localBox.min.x, localBox.min.y, localBox.max.z}, {localBox.max.x, localBox.min.y, localBox.max.z}, {localBox.min.x, localBox.max.y, localBox.max.z}, {localBox.max.x, localBox.max.y, localBox.max.z}};
+
+        // Transform local wall box to world space
+        for (int i = 0; i < 8; i++)
+        {
+            glm::vec3 transformed = glm::vec3(model * glm::vec4(corners[i], 1.0f));
+            w.min = glm::min(w.min, transformed);
+            w.max = glm::max(w.max, transformed);
+        }
+        worldBoxes.push_back(w);
+    }
+    return worldBoxes;
 }
