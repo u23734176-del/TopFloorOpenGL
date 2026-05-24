@@ -27,7 +27,7 @@ static const float FR_H         = 3.5f;    // height
 
 // Skirt brim
 static const float SKIRT_INNER  = FR_TOP;
-static const float SKIRT_OUTER  = FR_TOP;
+static const float SKIRT_OUTER  = FR_TOP + 0.25f;
 static const float SKIRT_Y      = BOT_BASE_H + FR_H; // Shifted up to sit on base!
 
 // NEW: Red Cube underneath the house
