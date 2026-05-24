@@ -23,8 +23,7 @@ src/objects/Windmill.cpp \
 src/physics/Collision.cpp \
 src/physics/PhysicsWorld.cpp \
 src/physics/BallPhysics.cpp \
-# src/objects/SphereBall.cpp \
-# src/objects/Decoration.cpp \
+
 
 main: src/main.cpp src/glad.c
 	g++ -std=c++11 -g $(files) src/main.cpp src/glad.c -lglfw -pthread -lGLEW -ldl -lGL -o main
