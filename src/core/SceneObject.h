@@ -62,6 +62,8 @@ public:
     // For complex objects to return granular hitboxes (like GolfHole walls)
     virtual std::vector<AABB> getCollisionAABBs() const;
 
+    virtual bool isTransparent() const { return false; }
+
 protected:
     // Helper for initializing AABB
     void initAABBFromVertices(const std::vector<glm::vec3>& vertices);

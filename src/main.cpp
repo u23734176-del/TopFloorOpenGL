@@ -38,7 +38,11 @@
 #include "ui/HUD.h"
 
 //SkyBox
-#include "../skybox/skybox.h" 
+#include "../skybox/skybox.h"
+
+// Slices A, B, C
+#include "objects/Drone.h"
+#include "objects/Water.h"
 
 const int WIDTH = 1000;
 const int HEIGHT = 800;
@@ -298,16 +302,11 @@ int main()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    ShaderManager::load("basic",        "shaders/basic.vert",        "shaders/basic.frag");
+    ShaderManager::load("basic", "shaders/basic.vert", "shaders/basic.frag");
     ShaderManager::load("shadow_depth", "shaders/shadow_depth.vert", "shaders/shadow_depth.frag");
-//Skybox
 
-
-
-
-
-
-
+    // ADD THIS LINE:
+    ShaderManager::load("water", "shaders/water.vert", "shaders/water.frag");
 
     // ---- Skybox ----
     Skybox skybox;
@@ -351,7 +350,6 @@ int main()
     HUD hud;
     hud.build();
 
-    // ---- Scene + Course ----
     // ---- Scene + Course ----
     Scene scene;
     g_scene = &scene;
@@ -444,9 +442,24 @@ int main()
     board->build();
     board->setSubMeshColor("", glm::vec3(0.8f, 0.8f, 0.8f));
     scene.addObject(board);
+    
     // ==========================================================
-
+    // 1. DRONE (Slice A)
+    // ==========================================================
+    Drone drone;
+    drone.setPosition(glm::vec3(0.0f, 5.0f, 0.0f)); // Start hovering above the gazebo
+    scene.addObject(&drone);                        // Adds to opaque render bucket automatically
+    
+    // ==========================================================
+    // 2. WATER (Slice C)
+    // ==========================================================
+    Water lake;
+    lake.setPosition(glm::vec3(-15.0f, 0.0f, -15.0f)); // Adjust to match course map
+    lake.setSize(12.0f, 12.0f);
+    scene.addObject(&lake); // Scene will route this to drawTransparentObjects
+    
     scene.build(); // This triggers Assimp to load the files into VRAM
+    // ==========================================================
 
     LightSet lights;
     updateLightingForDayNight(lights, isNight);
@@ -459,14 +472,30 @@ int main()
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = (float)glfwGetTime();
-        float deltaTime    = currentFrame - lastFrame;
-        lastFrame          = currentFrame;
+        float deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
 
+        // 1. Process Drone Flight
+        drone.processInput(window, deltaTime);
+
+        // 2. Process Game/UI Input (Putting, Day/Night toggle, Esc to quit)
         handleInput(window, deltaTime, postProcessor, isNight, lights, camera, ballState);
-        physicsWorld.update(deltaTime);
-        camera.processInput(window, deltaTime);
 
-        glm::mat4 view       = camera.getViewMatrix();
+        // 3. Slave Camera to Drone (3rd Person Follow)
+        camera.followTarget(drone.getPosition(), drone.getFront(), drone.getRoll());
+
+        // 4. Attach Drone Spotlight
+        lights.spotlight.position = drone.getPosition();
+        lights.spotlight.direction = drone.getFront();
+        lights.spotlightEnabled = isNight;
+
+        // 5. Physics Step
+        physicsWorld.update(deltaTime);
+        
+        course.update(deltaTime);
+
+        // Calculate Matrices
+        glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = camera.getProjectionMatrix((float)WIDTH, (float)HEIGHT);
         glm::mat4 lightSpaceMatrix = calculateLightSpaceMatrix(lights);
 
@@ -480,7 +509,7 @@ int main()
         shadowMap.endDepthPass(WIDTH, HEIGHT);
 
         // ---- Main pass ----
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //black; skybox covers it
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // black; skybox covers it
         postProcessor.beginRender();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -495,11 +524,21 @@ int main()
         glBindTexture(GL_TEXTURE_2D, shadowMap.getDepthTexture());
         glUniform1i(glGetUniformLocation(shaderProgram, "shadowMap"), 1);
 
-        scene.drawAllObjects(view, projection, lights);
-        // Draw skybox last among 3D objects (before post-process)
+        // --- 1. OPAQUE PASS ---
+        scene.drawOpaqueObjects(view, projection, lights);
+
+        // --- 2. SKYBOX PASS ---
+        glDepthFunc(GL_LEQUAL);
         skybox.draw(view, projection, isNight);
+        glDepthFunc(GL_LESS);
 
+        // --- 3. TRANSPARENT PASS ---
+        glEnable(GL_BLEND);
+        // Note: Your Water.cpp already manages glDepthMask(GL_FALSE) natively!
+        scene.drawTransparentObjects(view, projection, lights);
+        glDisable(GL_BLEND);
 
+        // ---- Post Processing & UI ----
         postProcessor.endRender();
         postProcessor.draw();
 
@@ -507,14 +546,14 @@ int main()
 
         // ---- Window title ----
         glm::vec3 camPos = camera.getPosition();
-        std::string modeText = (postProcessor.getMode() == 1) ? "Grayscale"
-                             : (postProcessor.getMode() == 2) ? "Inverted"
-                             :                                   "Normal";
+        std::string modeText = (postProcessor.getMode() == 1)   ? "Grayscale"
+                               : (postProcessor.getMode() == 2) ? "Inverted"
+                                                                : "Normal";
         std::string title =
             "Mini Golf | X:" + std::to_string((int)camPos.x) +
-            " Y:"            + std::to_string((int)camPos.y) +
-            " Z:"            + std::to_string((int)camPos.z) +
-            " | "            + modeText;
+            " Y:" + std::to_string((int)camPos.y) +
+            " Z:" + std::to_string((int)camPos.z) +
+            " | " + modeText;
         glfwSetWindowTitle(window, title.c_str());
 
         glfwSwapBuffers(window);

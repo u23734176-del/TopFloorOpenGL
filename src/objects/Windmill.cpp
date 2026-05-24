@@ -122,7 +122,7 @@ Windmill::Windmill()
     , redCubeVao(0),redCubeVbo(0),redCubeCount(0)
     , frustumTopY(FR_H), houseBaseY(HBASE_Y), houseTopY(HOUSE_Y+HOUSE_H)
     , roofY(ROOF_Y), axleY(AXLE_Y_CENT), axleZ(AXLE_Z_FRONT)
-    , bladeOffset(BLADE_OFFSET)
+    , bladeOffset(BLADE_OFFSET), rotorAngle(0.0f)
 {}
 
 // ---------------------------------------------------------------------------
@@ -510,7 +510,8 @@ void Windmill::draw(const glm::mat4& view,
 
     // ---- Blades — 4 planks rotating around Z, hub at front of house ----
     {
-        float spin = (float)glfwGetTime() * 60.0f; // degrees/sec
+        // float spin = (float)glfwGetTime() * 60.0f; // degrees/sec
+        float spin = rotorAngle;
 
         // Hub world position: front face of house, at axle height
         glm::vec3 hubLocal(0.0f, AXLE_Y_CENT, AXLE_Z_FRONT);
@@ -587,7 +588,8 @@ void Windmill::drawDepth(GLuint depthShader)
     }
 
     // ---- Blades ----
-    float spin = (float)glfwGetTime() * 60.0f;
+    // float spin = (float)glfwGetTime() * 60.0f;
+    float spin = rotorAngle;
     glm::vec3 hubLocal(0.0f, AXLE_Y_CENT, AXLE_Z_FRONT);
     for(int i = 0; i < 4; ++i)
     {
@@ -598,4 +600,9 @@ void Windmill::drawDepth(GLuint depthShader)
             * glm::translate(glm::mat4(1.0f), glm::vec3(0,BLADE_OFFSET,0));
         drawOneDepth(bladeVao, bladeCount, m, depthShader);
     }
+}
+
+void Windmill::update(float dt)
+{
+    rotorAngle += 60.0f * dt; // Spin at 60 degrees per second
 }

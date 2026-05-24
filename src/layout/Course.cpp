@@ -409,3 +409,8 @@ void Course::addToScene(void (*addFn)(SceneObject*))
     addFn(&tunnel);
     addFn(&windmill);
 }
+
+void Course::update(float dt)
+{
+    windmill.update(dt);
+}

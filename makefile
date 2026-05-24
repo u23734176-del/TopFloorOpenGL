@@ -19,6 +19,8 @@ src/objects/GolfHole.cpp \
 src/objects/StaticMesh.cpp \
 src/objects/AssimpModel.cpp \
 src/objects/SphereBall.cpp \
+src/objects/Water.cpp \
+src/objects/Drone.cpp \
 src/layout/Course.cpp \
 skybox/skybox.cpp \
 src/objects/Windmill.cpp \

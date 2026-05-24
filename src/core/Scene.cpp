@@ -12,11 +12,25 @@ void Scene::build()
     }
 }
 
-void Scene::drawAllObjects(const glm::mat4& view,
-                           const glm::mat4& projection,
-                           const LightSet& lights) {
-    for (SceneObject* obj : objects) {
-        obj->draw(view, projection, lights);
+void Scene::drawOpaqueObjects(const glm::mat4 &view, const glm::mat4 &projection, const LightSet &lights)
+{
+    for (SceneObject *obj : objects)
+    {
+        if (!obj->isTransparent())
+        {
+            obj->draw(view, projection, lights);
+        }
+    }
+}
+
+void Scene::drawTransparentObjects(const glm::mat4 &view, const glm::mat4 &projection, const LightSet &lights)
+{
+    for (SceneObject *obj : objects)
+    {
+        if (obj->isTransparent())
+        {
+            obj->draw(view, projection, lights);
+        }
     }
 }
 

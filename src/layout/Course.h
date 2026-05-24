@@ -33,6 +33,8 @@ public:
     // Uses a callback so we don't need to include Scene.h here.
     void addToScene(void (*addFn)(SceneObject*));
 
+    void update(float dt);
+
 private:
     // ---- Holes ----
     GolfHole holes[18];

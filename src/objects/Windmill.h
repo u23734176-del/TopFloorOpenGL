@@ -27,6 +27,8 @@ class Windmill : public SceneObject
 public:
     Windmill();
 
+    void update(float dt); // <-- NEW
+
     void build()     override;
     void draw(const glm::mat4& view,
               const glm::mat4& proj,
@@ -107,6 +109,8 @@ private:
     std::vector<float> makeFrustumPanel(float rBot, float rTop, float h,
                                         float a0, float a1);
     std::vector<float> makeWindowBuf(float w, float h);
+
+    float rotorAngle; // <-- NEW
 };
 
 #endif

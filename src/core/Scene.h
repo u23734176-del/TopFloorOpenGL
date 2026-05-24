@@ -19,10 +19,14 @@ class Scene {
         void addObject(SceneObject* obj);
         void build();
 
-        void drawAllObjects(const glm::mat4& view,
-                            const glm::mat4& projection,
-                            const LightSet& lights);
-        
+        void drawOpaqueObjects(const glm::mat4 &view,
+                               const glm::mat4 &projection,
+                               const LightSet &lights);
+
+        void drawTransparentObjects(const glm::mat4 &view,
+                                    const glm::mat4 &projection,
+                                    const LightSet &lights);
+
         void drawDepthAllObjects(GLuint depthShaderProgram);
         
 };

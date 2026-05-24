@@ -41,6 +41,7 @@ public:
               const glm::mat4 &proj,
               const LightSet &lights) override;
     void drawDepth(GLuint depthShaderProgram) override;
+    bool isTransparent() const override { return true; }
 };
 
 #endif
