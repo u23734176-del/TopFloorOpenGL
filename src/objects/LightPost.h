@@ -191,9 +191,10 @@ public:
                          3.780488f, 8.443628f, 0.265126f, -0.0f, 1.0f, -0.0f, 0.625f, 0.75f
                  })
     {
-        // Set default scale/color for the palm tree here
-        setScale(glm::vec3(1.5f));
-        setColor(glm::vec3(0.3f, 0.6f, 0.2f));
+        // Default spawn state
+        setScale(glm::vec3(1.0f));
+        // Default colour
+        setColor(glm::vec3(0.55f, 0.55f, 0.58f));
     }
 };
 
