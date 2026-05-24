@@ -36,6 +36,9 @@
 // HUD
 #include "ui/HUD.h"
 
+//SkyBox
+#include "../skybox/skybox.h" 
+
 const int WIDTH = 1000;
 const int HEIGHT = 800;
 const unsigned int SHADOW_WIDTH = 2048;
@@ -46,6 +49,27 @@ const unsigned int SHADOW_HEIGHT = 2048;
 // ---------------------------------------------------------------------------
 static Scene* g_scene = nullptr;
 static void addObjectToScene(SceneObject* obj) { g_scene->addObject(obj); }
+
+// Write skybox faces in the easy order:
+// right, left, front, back, top, bottom.
+// OpenGL cubemaps must be uploaded in this order:
+// +X right, -X left, +Y top, -Y bottom, +Z front, -Z back.
+static std::vector<std::string> skyboxFaces(const std::string& right,
+                                            const std::string& left,
+                                            const std::string& front,
+                                            const std::string& back,
+                                            const std::string& top,
+                                            const std::string& bottom)
+{
+    return {
+        right,
+        left,
+        top,
+        bottom,
+        front,
+        back
+    };
+}
 
 // ---------------------------------------------------------------------------
 // GLFW / GLEW setup
@@ -240,6 +264,41 @@ int main()
 
     ShaderManager::load("basic",        "shaders/basic.vert",        "shaders/basic.frag");
     ShaderManager::load("shadow_depth", "shaders/shadow_depth.vert", "shaders/shadow_depth.frag");
+//Skybox
+
+
+
+
+
+
+
+
+    // ---- Skybox ----
+    Skybox skybox;
+    std::vector<std::string> dayFaces = skyboxFaces(
+        "skybox/day/right.png",
+        "skybox/day/left.png",
+        "skybox/day/front.png",
+        "skybox/day/back.png",
+        "skybox/day/top.png",
+        "skybox/day/bottom.png"
+    );
+
+    std::vector<std::string> nightFaces = skyboxFaces(
+        "skybox/night/right.png",
+        "skybox/night/left.png",
+        "skybox/night/front.png",
+        "skybox/night/back.png",
+        "skybox/night/top.png",
+        "skybox/night/bottom.png"
+    );
+
+    if (!skybox.build(dayFaces, nightFaces))
+    {
+        std::cerr << "Failed to build skybox. Check shader and texture paths.\n";
+        return -1;
+    }
+
 
     ShadowMap shadowMap;
     if (!shadowMap.init(SHADOW_WIDTH, SHADOW_HEIGHT))
@@ -355,8 +414,8 @@ int main()
         shadowMap.endDepthPass(WIDTH, HEIGHT);
 
         // ---- Main pass ----
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //black; skybox covers it
         postProcessor.beginRender();
-        glClearColor(0.53f, 0.81f, 0.92f, 1.0f);   // sky-blue background
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         GLuint shaderProgram = ShaderManager::get("basic");
@@ -371,6 +430,9 @@ int main()
         glUniform1i(glGetUniformLocation(shaderProgram, "shadowMap"), 1);
 
         scene.drawAllObjects(view, projection, lights);
+        // Draw skybox last among 3D objects (before post-process)
+        skybox.draw(view, projection, isNight);
+
 
         postProcessor.endRender();
         postProcessor.draw();

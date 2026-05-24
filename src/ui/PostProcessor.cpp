@@ -16,7 +16,7 @@ float quadVertices[] = {
 
 PostProcessor::PostProcessor()
 {
-    currentMode = 0;
+    mode = 0;
 }
 
 void PostProcessor::build(int width, int height)
@@ -150,18 +150,15 @@ void PostProcessor::draw()
     glDisable(GL_DEPTH_TEST);
 
     glUseProgram(shader);
-
-    glUniform1i(
-        glGetUniformLocation(shader, "mode"),
-        mode
-    );
+    glUniform1i(glGetUniformLocation(shader, "mode"), mode);
+    glUniform1i(glGetUniformLocation(shader, "screenTexture"), 0); // ← add
 
     glBindVertexArray(quadVAO);
 
+    glActiveTexture(GL_TEXTURE0);                         // ← add
     glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
-
     glBindVertexArray(0);
 }
 
@@ -172,5 +169,5 @@ void PostProcessor::setMode(int newMode)
 
 int PostProcessor::getMode()
 {
-    return currentMode;
+    return mode;
 }
