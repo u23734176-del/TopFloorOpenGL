@@ -98,6 +98,8 @@ void Cube::build()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+    initAABBFromPrimitive(glm::vec3(1.0f)); // cube geometry spans ±1.0; scale applied by getWorldAABB
 }
 
 void Cube::draw(

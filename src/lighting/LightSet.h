@@ -2,6 +2,7 @@
 #define LIGHTSET_H
 
 #include <glm/glm.hpp>
+#include <GL/glew.h> // for glGetUniformLocation, etc.
 
 // =====================================
 // Directional Light (Sun/Moon)
