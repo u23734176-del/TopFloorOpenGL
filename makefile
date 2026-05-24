@@ -19,7 +19,6 @@ src/objects/GolfHole.cpp \
 src/objects/StaticMesh.cpp \
 src/layout/Course.cpp \
 skybox/skybox.cpp \
-# src/objects/Windmill.cpp \
 src/objects/Windmill.cpp \
 src/physics/Collision.cpp \
 src/physics/PhysicsWorld.cpp \
