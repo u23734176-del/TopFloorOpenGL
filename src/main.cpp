@@ -22,6 +22,14 @@
 #include "physics/BallPhysics.h"
 #include "physics/PhysicsWorld.h"
 
+// External Objects (Slice E - StaticMesh wrappers)
+#include "objects/PalmTree.h"
+#include "objects/Bush.h"
+#include "objects/BenchChair.h"
+#include "objects/BenchTable.h"
+#include "objects/LightPost.h"
+#include "objects/BillBoard.h"
+
 // Post Processor
 #include "ui/PostProcessor.h"
 
@@ -249,6 +257,7 @@ int main()
     hud.build();
 
     // ---- Scene + Course ----
+    // ---- Scene + Course ----
     Scene scene;
     g_scene = &scene;
 
@@ -256,6 +265,63 @@ int main()
     course.build();
     course.addToScene(addObjectToScene);
 
+    // ==========================================================
+    // DECORATIONS & EXTERNAL OBJECTS
+    // ==========================================================
+
+    // 1. Palm Trees
+    PalmTree palm1, palm2;
+    palm1.setPosition(glm::vec3(5.0f, 0.0f, 28.0f)); // Near Hole 1
+    palm1.setScale(glm::vec3(1.5f));
+
+    palm2.setPosition(glm::vec3(-10.0f, 0.0f, -15.0f)); // Near lake/Hole 9
+    palm2.setScale(glm::vec3(1.2f));
+    palm2.setRotation(glm::vec3(0.0f, 45.0f, 0.0f));
+
+    scene.addObject(&palm1);
+    scene.addObject(&palm2);
+
+    // 2. Bushes
+    Bush bush1, bush2;
+    bush1.setPosition(glm::vec3(2.0f, 0.0f, 25.0f));
+    bush1.setScale(glm::vec3(0.8f));
+
+    bush2.setPosition(glm::vec3(22.0f, 0.0f, -28.0f));
+    bush2.setScale(glm::vec3(1.0f));
+
+    scene.addObject(&bush1);
+    scene.addObject(&bush2);
+
+    // 3. Bench & Table Area (Spawn Point / Gazebo area)
+    BenchTable table;
+    table.setPosition(glm::vec3(0.0f, 0.0f, 5.0f));
+    table.setScale(glm::vec3(1.0f));
+    scene.addObject(&table);
+
+    BenchChair chair1, chair2;
+    chair1.setPosition(glm::vec3(0.0f, 0.0f, 3.5f));
+    chair2.setPosition(glm::vec3(0.0f, 0.0f, 6.5f));
+    chair2.setRotation(glm::vec3(0.0f, 180.0f, 0.0f)); // Face the table
+
+    scene.addObject(&chair1);
+    scene.addObject(&chair2);
+
+    // 4. Light Post
+    LightPost lamp;
+    lamp.setPosition(glm::vec3(3.0f, 0.0f, 5.0f));
+    lamp.setScale(glm::vec3(1.0f));
+    scene.addObject(&lamp);
+
+    // 5. Billboard
+    BillBoard board;
+    board.setPosition(glm::vec3(-5.0f, 0.0f, 35.0f));
+    board.setRotation(glm::vec3(0.0f, -20.0f, 0.0f));
+    board.setScale(glm::vec3(1.5f));
+    scene.addObject(&board);
+
+    // ==========================================================
+
+    // Build the scene (This will now trigger the VAO/VBO upload for your StaticMeshes)
     scene.build();
 
     LightSet lights;

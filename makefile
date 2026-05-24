@@ -16,6 +16,7 @@ src/objects/Cone.cpp \
 src/objects/Rock.cpp \
 src/objects/Tunnel.cpp \
 src/objects/GolfHole.cpp \
+src/objects/StaticMesh.cpp \
 src/layout/Course.cpp \
 src/objects/Windmill.cpp \
 src/physics/Collision.cpp \
