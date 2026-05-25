@@ -363,11 +363,11 @@ void Course::build()
 
     // ---- WATER ----
     water[0].setSize(10.0f, 7.0f);
-    water[0].setPosition({ 9, 0.06f, 10}); water[0].setColor({0.10f,0.35f,0.55f});
+    water[0].setPosition({ 9.0f, 0.03f, 10.0f}); water[0].setColor({0.10f,0.35f,0.55f});
     water[0].setAlpha(0.7f); water[0].setShininess(128.0f); water[0].build();
 
     water[1].setSize(5.5f, 4.5f);
-    water[1].setPosition({17, 0.06f,  3}); water[1].setColor({0.10f,0.35f,0.55f});
+    water[1].setPosition({17.0f, 0.03f, 3.0f}); water[1].setColor({0.10f,0.35f,0.55f});
     water[1].setAlpha(0.7f); water[1].setShininess(128.0f); water[1].build();
 
     // ---- HOLES + GRASS BASES ----
