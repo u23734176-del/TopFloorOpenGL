@@ -6,6 +6,7 @@ src/core/ShaderManager.cpp \
 src/core/shader.cpp \
 src/core/SceneObject.cpp \
 src/objects/AssimpModel.cpp \
+src/core/ModelInstance.cpp \
 src/core/ResourceManager.cpp \
 src/objects/Cube.cpp \
 stb_image.cpp \

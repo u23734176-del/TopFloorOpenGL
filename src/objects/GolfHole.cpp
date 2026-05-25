@@ -1,199 +1,463 @@
 #include "GolfHole.h"
 #include "../core/ShaderManager.h"
+
 #include <glm/gtc/matrix_transform.hpp>
-#include <iostream>
+#include <cmath>
+#include <vector>
 
-GolfHole::GolfHole()
-    : holeNumber(1), holeWidth(3.0f), holeLength(10.0f),
-      hasSand(false), sandOffset(0.0f), sandSize(2.0f),
-      vao(0), vbo(0), vertexCount(0)
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+static void pushVert(std::vector<float> &buf,
+                     const glm::vec3 &p, const glm::vec3 &n)
 {
-    // Brighter synthetic putting green
-    turfColor = glm::vec3(0.25f, 0.55f, 0.2f);
-    // Sleek Wood/Brick border walls
-    wallColor = glm::vec3(0.55f, 0.35f, 0.25f);
-    // Standard red flag
-    flagColor = glm::vec3(0.8f, 0.1f, 0.1f);
+    buf.push_back(p.x);
+    buf.push_back(p.y);
+    buf.push_back(p.z);
+    buf.push_back(n.x);
+    buf.push_back(n.y);
+    buf.push_back(n.z);
 }
 
-GolfHole::~GolfHole()
-{
-    if (vao)
-        glDeleteVertexArrays(1, &vao);
-    if (vbo)
-        glDeleteBuffers(1, &vbo);
-}
-
-// Transform a point using a Y-axis rotation
+// Rotate a point around the Y axis (degrees)
 static glm::vec3 rotY(const glm::vec3 &p, float deg)
 {
-    float rad = glm::radians(deg);
-    float c = cos(rad), s = sin(rad);
-    return glm::vec3(p.x * c + p.z * s, p.y, -p.x * s + p.z * c);
+    float r = glm::radians(deg);
+    return glm::vec3(
+        cosf(r) * p.x - sinf(r) * p.z,
+        p.y,
+        sinf(r) * p.x + cosf(r) * p.z);
 }
 
-void GolfHole::buildSegment(std::vector<float> &data, float cx, float cz, float hw, float hl, float rotDeg)
+static glm::vec2 norm2(glm::vec2 v)
 {
-    // Sleeker, lower walls typical of modern mini-golf
-    float wt = 0.3f;  // wall thickness
-    float wh = 0.25f; // wall height
+    float L = sqrtf(v.x * v.x + v.y * v.y);
+    return (L > 1e-9f) ? v / L : glm::vec2(0.0f);
+}
 
-    glm::vec3 upN(0.0f, 1.0f, 0.0f);
+// ---------------------------------------------------------------------------
+// GolfHole
+// ---------------------------------------------------------------------------
 
-    // Dynamic AABB generation for Physics
-    auto addWallBox = [&](glm::vec3 minP, glm::vec3 maxP)
+GolfHole::GolfHole()
+    : holeWidth(4.0f), holeLength(10.0f), wallHeight(0.3f), wallThick(0.15f), turfColor(0.15f, 0.55f, 0.15f), wallColor(0.25f, 0.18f, 0.08f), flagColor(1.0f, 0.0f, 0.0f), hasSand(false), sandOffset(0.0f), sandSize(1.5f, 1.5f), holeNumber(0), centerlineWidth(0.0f), vao(0), vbo(0), vertexCount(0), sandVao(0), sandVbo(0), sandVertexCount(0), flagVao(0), flagVbo(0), flagVertexCount(0)
+{
+}
+
+// Push one quad (two triangles) with given normal. Winding matches the
+// original: bl,br,tl / br,tr,tl.
+void GolfHole::pushQuad(std::vector<float> &buf,
+                        glm::vec3 tl, glm::vec3 tr,
+                        glm::vec3 bl, glm::vec3 br,
+                        glm::vec3 normal)
+{
+    pushVert(buf, bl, normal);
+    pushVert(buf, br, normal);
+    pushVert(buf, tl, normal);
+    pushVert(buf, br, normal);
+    pushVert(buf, tr, normal);
+    pushVert(buf, tl, normal);
+}
+
+// ---------------------------------------------------------------------------
+// buildRibbon
+//
+// Builds a CONTINUOUS fairway from a polyline of centre points (local XZ,
+// tee -> cup). Emits:
+//   - one floor quad per facet (no internal cross-walls -> seamless surface)
+//   - a continuous LEFT wall and RIGHT wall (mitred at interior joints so the
+//     rail keeps constant width and the seams meet cleanly)
+//   - end-cap walls only at the tee end and cup end
+//   - accurate per-facet AABBs for both side walls + caps into wallBoxes
+//
+// This is the single geometry path: straight, L-shaped and curved holes all
+// become point lists fed through here, so no hole has internal ridges.
+//
+// "Left" is +90 degrees from the forward direction: for edge dir d=(dx,dz),
+// left normal = (-dz, dx).
+// ---------------------------------------------------------------------------
+void GolfHole::buildRibbon(std::vector<float> &buf,
+                           const std::vector<glm::vec2> &pts,
+                           float width,
+                           bool capStart, bool capEnd)
+{
+    const int n = (int)pts.size();
+    if (n < 2)
+        return;
+
+    const float h = width * 0.5f;
+    const float wt = wallThick;
+    const float wh = wallHeight;
+    const glm::vec3 upN(0.0f, 1.0f, 0.0f);
+
+    // ---- per-vertex left/right offset points (mitred) ----
+    std::vector<glm::vec2> Lc(n), Rc(n); // inner edge of rail (the playable border)
+    std::vector<glm::vec2> mdir(n);      // unit miter direction (points "left")
+    std::vector<float> mfac(n);          // miter length factor
+
+    for (int i = 0; i < n; ++i)
     {
-        AABB b;
-        b.min = glm::vec3(1e30f);
-        b.max = glm::vec3(-1e30f);
-        glm::vec3 corners[8] = {
-            {minP.x, minP.y, minP.z}, {maxP.x, minP.y, minP.z}, {minP.x, maxP.y, minP.z}, {maxP.x, maxP.y, minP.z}, {minP.x, minP.y, maxP.z}, {maxP.x, minP.y, maxP.z}, {minP.x, maxP.y, maxP.z}, {maxP.x, maxP.y, maxP.z}};
-        for (int i = 0; i < 8; ++i)
+        glm::vec2 ml;
+        float factor = 1.0f;
+        if (i == 0)
         {
-            glm::vec3 p = corners[i];
-            p = rotY(p, rotDeg);
-            p.x += cx;
-            p.z += cz;
-            b.min = glm::min(b.min, p);
-            b.max = glm::max(b.max, p);
+            glm::vec2 d = norm2(pts[1] - pts[0]);
+            ml = glm::vec2(-d.y, d.x);
         }
-        wallBoxes.push_back(b);
+        else if (i == n - 1)
+        {
+            glm::vec2 d = norm2(pts[i] - pts[i - 1]);
+            ml = glm::vec2(-d.y, d.x);
+        }
+        else
+        {
+            glm::vec2 d0 = norm2(pts[i] - pts[i - 1]);
+            glm::vec2 d1 = norm2(pts[i + 1] - pts[i]);
+            glm::vec2 n0(-d0.y, d0.x);
+            glm::vec2 n1(-d1.y, d1.x);
+            ml = norm2(n0 + n1);
+            float dot = ml.x * n0.x + ml.y * n0.y;              // = cos(theta/2)
+            factor = (fabsf(dot) > 0.2f) ? (1.0f / dot) : 5.0f; // clamp spikes
+        }
+        mdir[i] = ml;
+        mfac[i] = factor;
+        Lc[i] = pts[i] + ml * (h * factor);
+        Rc[i] = pts[i] - ml * (h * factor);
+    }
+
+    auto addBox = [&](glm::vec3 a, glm::vec3 b)
+    {
+        AABB box;
+        box.min = glm::min(a, b);
+        box.max = glm::max(a, b);
+        // ensure non-degenerate height
+        box.min.y = 0.0f;
+        box.max.y = wh;
+        wallBoxes.push_back(box);
     };
 
-    addWallBox(glm::vec3(-hw - wt, 0.0f, -hl), glm::vec3(-hw, wh, hl));           // Left
-    addWallBox(glm::vec3(hw, 0.0f, -hl), glm::vec3(hw + wt, wh, hl));             // Right
-    addWallBox(glm::vec3(-hw - wt, 0.0f, -hl - wt), glm::vec3(hw + wt, wh, -hl)); // Back
-    addWallBox(glm::vec3(-hw - wt, 0.0f, hl), glm::vec3(hw + wt, wh, hl + wt));   // Front
-
-    auto addQuad = [&](glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 n, float type)
+    // ---- floor + side walls, facet by facet ----
+    for (int i = 0; i + 1 < n; ++i)
     {
-        p0 = rotY(p0, rotDeg);
-        p0.x += cx;
-        p0.z += cz;
-        p1 = rotY(p1, rotDeg);
-        p1.x += cx;
-        p1.z += cz;
-        p2 = rotY(p2, rotDeg);
-        p2.x += cx;
-        p2.z += cz;
-        p3 = rotY(p3, rotDeg);
-        p3.x += cx;
-        p3.z += cz;
-        n = rotY(n, rotDeg);
+        glm::vec2 l0 = Lc[i], l1 = Lc[i + 1];
+        glm::vec2 r0 = Rc[i], r1 = Rc[i + 1];
 
-        glm::vec3 pts[6] = {p0, p1, p2, p0, p2, p3};
-        for (int i = 0; i < 6; ++i)
-        {
-            data.push_back(pts[i].x);
-            data.push_back(pts[i].y);
-            data.push_back(pts[i].z);
-            data.push_back(n.x);
-            data.push_back(n.y);
-            data.push_back(n.z);
-            data.push_back(type); // Pack color type into U coordinate
-            data.push_back(0.0f);
-        }
+        // FLOOR (one quad spanning the facet, y=0). Normal up.
+        // tl=l1, tr=r1, bl=l0, br=r0  -> keeps original CCW winding.
+        pushQuad(buf,
+                 glm::vec3(l1.x, 0.0f, l1.y),
+                 glm::vec3(r1.x, 0.0f, r1.y),
+                 glm::vec3(l0.x, 0.0f, l0.y),
+                 glm::vec3(r0.x, 0.0f, r0.y),
+                 upN);
+
+        // outward wall offset along the miter direction
+        glm::vec2 lo0 = l0 + mdir[i] * wt;
+        glm::vec2 lo1 = l1 + mdir[i + 1] * wt;
+        glm::vec2 ro0 = r0 - mdir[i] * wt;
+        glm::vec2 ro1 = r1 - mdir[i + 1] * wt;
+
+        // face normals (approximate, per facet)
+        glm::vec2 fdir = norm2(pts[i + 1] - pts[i]);
+        glm::vec3 leftN(-fdir.y, 0.0f, fdir.x);  // points left/out
+        glm::vec3 rightN(fdir.y, 0.0f, -fdir.x); // points right/out
+
+        // ---- LEFT WALL ----
+        // top
+        pushQuad(buf,
+                 glm::vec3(lo1.x, wh, lo1.y),
+                 glm::vec3(l1.x, wh, l1.y),
+                 glm::vec3(lo0.x, wh, lo0.y),
+                 glm::vec3(l0.x, wh, l0.y),
+                 upN);
+        // inner face (faces the fairway / right)
+        pushQuad(buf,
+                 glm::vec3(l1.x, wh, l1.y),
+                 glm::vec3(l0.x, wh, l0.y),
+                 glm::vec3(l1.x, 0.0f, l1.y),
+                 glm::vec3(l0.x, 0.0f, l0.y),
+                 -leftN);
+        // outer face
+        pushQuad(buf,
+                 glm::vec3(lo0.x, wh, lo0.y),
+                 glm::vec3(lo1.x, wh, lo1.y),
+                 glm::vec3(lo0.x, 0.0f, lo0.y),
+                 glm::vec3(lo1.x, 0.0f, lo1.y),
+                 leftN);
+        addBox(glm::vec3(lo0.x, 0.0f, lo0.y), glm::vec3(l1.x, wh, l1.y));
+
+        // ---- RIGHT WALL ----
+        pushQuad(buf,
+                 glm::vec3(r1.x, wh, r1.y),
+                 glm::vec3(ro1.x, wh, ro1.y),
+                 glm::vec3(r0.x, wh, r0.y),
+                 glm::vec3(ro0.x, wh, ro0.y),
+                 upN);
+        // inner face (faces fairway / left)
+        pushQuad(buf,
+                 glm::vec3(r0.x, wh, r0.y),
+                 glm::vec3(r1.x, wh, r1.y),
+                 glm::vec3(r0.x, 0.0f, r0.y),
+                 glm::vec3(r1.x, 0.0f, r1.y),
+                 -rightN);
+        // outer face
+        pushQuad(buf,
+                 glm::vec3(ro1.x, wh, ro1.y),
+                 glm::vec3(ro0.x, wh, ro0.y),
+                 glm::vec3(ro1.x, 0.0f, ro1.y),
+                 glm::vec3(ro0.x, 0.0f, ro0.y),
+                 rightN);
+        addBox(glm::vec3(ro0.x, 0.0f, ro0.y), glm::vec3(r1.x, wh, r1.y));
+    }
+
+    // ---- END CAPS ----
+    auto buildCap = [&](glm::vec2 lc, glm::vec2 rc, glm::vec2 outDir)
+    {
+        glm::vec2 lo = lc + outDir * wt;
+        glm::vec2 ro = rc + outDir * wt;
+        glm::vec3 capN(outDir.x, 0.0f, outDir.y);
+        // top
+        pushQuad(buf,
+                 glm::vec3(lo.x, wh, lo.y),
+                 glm::vec3(ro.x, wh, ro.y),
+                 glm::vec3(lc.x, wh, lc.y),
+                 glm::vec3(rc.x, wh, rc.y),
+                 upN);
+        // outer face
+        pushQuad(buf,
+                 glm::vec3(lo.x, wh, lo.y),
+                 glm::vec3(ro.x, wh, ro.y),
+                 glm::vec3(lo.x, 0.0f, lo.y),
+                 glm::vec3(ro.x, 0.0f, ro.y),
+                 capN);
+        addBox(glm::vec3(lo.x, 0.0f, lo.y), glm::vec3(rc.x, wh, rc.y));
     };
 
-    // Floor (Type 0.0 = Turf)
-    addQuad(glm::vec3(-hw, 0.0f, -hl), glm::vec3(-hw, 0.0f, hl),
-            glm::vec3(hw, 0.0f, hl), glm::vec3(hw, 0.0f, -hl), upN, 0.0f);
+    if (capStart)
+    {
+        glm::vec2 outDir = -norm2(pts[1] - pts[0]); // points back from tee
+        buildCap(Lc[0], Rc[0], outDir);
+    }
+    if (capEnd)
+    {
+        glm::vec2 outDir = norm2(pts[n - 1] - pts[n - 2]); // points past cup
+        buildCap(Lc[n - 1], Rc[n - 1], outDir);
+    }
+}
 
-    // Walls (Type 1.0 = Wall)
-    // Left Wall
-    addQuad(glm::vec3(-hw - wt, wh, -hl), glm::vec3(-hw - wt, wh, hl), glm::vec3(-hw, wh, hl), glm::vec3(-hw, wh, -hl), upN, 1.0f);
-    addQuad(glm::vec3(-hw, 0.0f, -hl), glm::vec3(-hw, 0.0f, hl), glm::vec3(-hw, wh, hl), glm::vec3(-hw, wh, -hl), glm::vec3(1, 0, 0), 1.0f);
-    // Right Wall
-    addQuad(glm::vec3(hw, wh, -hl), glm::vec3(hw, wh, hl), glm::vec3(hw + wt, wh, hl), glm::vec3(hw + wt, wh, -hl), upN, 1.0f);
-    addQuad(glm::vec3(hw, 0.0f, hl), glm::vec3(hw, 0.0f, -hl), glm::vec3(hw, wh, -hl), glm::vec3(hw, wh, hl), glm::vec3(-1, 0, 0), 1.0f);
-    // Back Wall
-    addQuad(glm::vec3(-hw - wt, wh, -hl - wt), glm::vec3(-hw - wt, wh, -hl), glm::vec3(hw + wt, wh, -hl), glm::vec3(hw + wt, wh, -hl - wt), upN, 1.0f);
-    addQuad(glm::vec3(hw, 0.0f, -hl), glm::vec3(-hw, 0.0f, -hl), glm::vec3(-hw, wh, -hl), glm::vec3(hw, wh, -hl), glm::vec3(0, 0, 1), 1.0f);
-    // Front Wall
-    addQuad(glm::vec3(-hw - wt, wh, hl), glm::vec3(-hw - wt, wh, hl + wt), glm::vec3(hw + wt, wh, hl + wt), glm::vec3(hw + wt, wh, hl), upN, 1.0f);
-    addQuad(glm::vec3(-hw, 0.0f, hl), glm::vec3(hw, 0.0f, hl), glm::vec3(hw, wh, hl), glm::vec3(-hw, wh, hl), glm::vec3(0, 0, -1), 1.0f);
+// A straight rectangle expressed as a 2-point ribbon (tee +Z -> cup -Z),
+// rotated by rotDeg and offset to (cx,cz). Used for straight + L segments so
+// everything flows through buildRibbon.
+void GolfHole::buildSegment(std::vector<float> &buf,
+                            float cx, float cz,
+                            float w, float l, float rotDeg)
+{
+    glm::vec3 tee = rotY(glm::vec3(0.0f, 0.0f, l * 0.5f), rotDeg);
+    glm::vec3 cup = rotY(glm::vec3(0.0f, 0.0f, -l * 0.5f), rotDeg);
+    std::vector<glm::vec2> pts = {
+        glm::vec2(tee.x + cx, tee.z + cz),
+        glm::vec2(cup.x + cx, cup.z + cz),
+    };
+    buildRibbon(buf, pts, w, true, true);
 }
 
 void GolfHole::build()
 {
     wallBoxes.clear();
-    std::vector<float> data;
 
-    // Main fairway
-    buildSegment(data, 0.0f, 0.0f, holeWidth, holeLength, 0.0f);
+    bool curved = (centerline.size() >= 2);
+    float ribW = (centerlineWidth > 0.0f) ? centerlineWidth : holeWidth;
 
-    // Extra segments (L-bends, U-turns)
+    // Cup location for the flag (last centerline point, or straight -Z end).
+    glm::vec2 cup = curved ? centerline.back()
+                           : glm::vec2(0.0f, -(holeLength * 0.5f - 0.5f));
+
+    std::vector<float> turfBuf;
+
+    // ==== MAIN FAIRWAY (one continuous ribbon) ====
+    if (curved)
+    {
+        buildRibbon(turfBuf, centerline, ribW, true, true);
+    }
+    else
+    {
+        buildSegment(turfBuf, 0.0f, 0.0f, holeWidth, holeLength, 0.0f);
+    }
+
+    // ==== EXTRA SEGMENTS (L-bends etc.) — each its own ribbon ====
     for (const auto &seg : extraSegments)
     {
-        buildSegment(data, seg.offsetX, seg.offsetZ, seg.width, seg.length, seg.rotY);
+        buildSegment(turfBuf, seg.offsetX, seg.offsetZ,
+                     seg.width, seg.length, seg.rotY);
     }
 
-    // Flag pole (Type 2.0 = Flag)
-    float px = 0.0f, pz = holeLength - 2.0f;
-    glm::vec3 flagN(-1.0f, 0.0f, 0.0f);
-    glm::vec3 p0(px, 0.0f, pz);
-    glm::vec3 p1(px, 4.0f, pz);
-    glm::vec3 p2(px + 1.5f, 3.5f, pz);
-    glm::vec3 p3(px, 3.0f, pz);
-
-    glm::vec3 pts[6] = {p0, p1, p2, p0, p2, p3}; // Simplified flag shape
-    for (int i = 0; i < 6; ++i)
-    {
-        data.push_back(pts[i].x);
-        data.push_back(pts[i].y);
-        data.push_back(pts[i].z);
-        data.push_back(flagN.x);
-        data.push_back(flagN.y);
-        data.push_back(flagN.z);
-        data.push_back(2.0f);
-        data.push_back(0.0f);
-    }
-
-    vertexCount = (int)(data.size() / 8);
-
-    std::vector<glm::vec3> positions;
-    for (size_t i = 0; i < data.size(); i += 8)
-    {
-        positions.push_back(glm::vec3(data[i], data[i + 1], data[i + 2]));
-    }
-    initAABBFromVertices(positions);
+    vertexCount = (int)(turfBuf.size() / 6);
 
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), data.data(), GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+    glBufferData(GL_ARRAY_BUFFER,
+                 (GLsizeiptr)(turfBuf.size() * sizeof(float)),
+                 turfBuf.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+                          (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+    // ==== SAND PATCH ====
+    if (hasSand)
+    {
+        std::vector<float> sandBuf;
+        glm::vec3 up(0.0f, 1.0f, 0.0f);
+        float sx = sandOffset.x;
+        float sz = sandOffset.z;
+        float sw = sandSize.x * 0.5f;
+        float sl = sandSize.y * 0.5f;
+        float sy = 0.01f;
+        pushQuad(sandBuf,
+                 glm::vec3(sx - sw, sy, sz + sl),
+                 glm::vec3(sx + sw, sy, sz + sl),
+                 glm::vec3(sx - sw, sy, sz - sl),
+                 glm::vec3(sx + sw, sy, sz - sl),
+                 up);
+        sandVertexCount = (int)(sandBuf.size() / 6);
+
+        glGenVertexArrays(1, &sandVao);
+        glGenBuffers(1, &sandVbo);
+        glBindVertexArray(sandVao);
+        glBindBuffer(GL_ARRAY_BUFFER, sandVbo);
+        glBufferData(GL_ARRAY_BUFFER,
+                     (GLsizeiptr)(sandBuf.size() * sizeof(float)),
+                     sandBuf.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+                              (void *)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+        glBindVertexArray(0);
+    }
+
+    // ==== FLAG (pole + triangle) at the cup ====
+    {
+        float cupX = cup.x;
+        float cupZ = cup.y;
+        float poleH = 1.2f;
+        float py = 0.0f;
+
+        std::vector<float> flagBuf;
+
+        float pt = 0.04f;
+        pushQuad(flagBuf,
+                 glm::vec3(cupX - pt, py + poleH, cupZ),
+                 glm::vec3(cupX + pt, py + poleH, cupZ),
+                 glm::vec3(cupX - pt, py, cupZ),
+                 glm::vec3(cupX + pt, py, cupZ),
+                 glm::vec3(0.0f, 0.0f, 1.0f));
+
+        float fw = 0.6f;
+        float fh = 0.4f;
+        glm::vec3 flagN(0.0f, 0.0f, 1.0f);
+        glm::vec3 ftop(cupX, py + poleH, cupZ + 0.01f);
+        glm::vec3 fbot(cupX, py + poleH - fh, cupZ + 0.01f);
+        glm::vec3 ftip(cupX + fw, py + poleH - fh * 0.5f, cupZ + 0.01f);
+
+        pushVert(flagBuf, ftop, flagN);
+        pushVert(flagBuf, fbot, flagN);
+        pushVert(flagBuf, ftip, flagN);
+
+        flagVertexCount = (int)(flagBuf.size() / 6);
+
+        glGenVertexArrays(1, &flagVao);
+        glGenBuffers(1, &flagVbo);
+        glBindVertexArray(flagVao);
+        glBindBuffer(GL_ARRAY_BUFFER, flagVbo);
+        glBufferData(GL_ARRAY_BUFFER,
+                     (GLsizeiptr)(flagBuf.size() * sizeof(float)),
+                     flagBuf.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+                              (void *)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+        glBindVertexArray(0);
+    }
+
+    // ==== Broad AABB ====
+    if (curved)
+    {
+        glm::vec2 lo(1e30f), hi(-1e30f);
+        for (const auto &p : centerline)
+        {
+            lo = glm::min(lo, p);
+            hi = glm::max(hi, p);
+        }
+        float pad = ribW * 0.5f + wallThick;
+        aabb.min = glm::vec3(lo.x - pad, 0.0f, lo.y - pad);
+        aabb.max = glm::vec3(hi.x + pad, wallHeight + 1.5f, hi.y + pad);
+    }
+    else
+    {
+        float hw = (holeWidth * 0.5f) + wallThick;
+        float hl = (holeLength * 0.5f) + wallThick;
+        aabb.min = glm::vec3(-hw, 0.0f, -hl);
+        aabb.max = glm::vec3(hw, wallHeight + 1.5f, hl);
+    }
 }
 
-void GolfHole::draw(const glm::mat4 &view, const glm::mat4 &proj, const LightSet & /*lights*/)
+// ---------------------------------------------------------------------------
+// draw helpers
+// ---------------------------------------------------------------------------
+static void drawBuffer(GLuint vao, int count,
+                       GLuint shader,
+                       const glm::mat4 &model,
+                       const glm::mat4 &view,
+                       const glm::mat4 &proj,
+                       const glm::vec3 &col)
 {
-    GLuint shader = ShaderManager::get("basic");
-    glUseProgram(shader);
-    glUniform3fv(glGetUniformLocation(shader, "objectColor"), 1, &turfColor[0]);
-
-    glm::mat4 model = getModelMatrix();
     glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, &model[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, &view[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, &proj[0][0]);
-
-    // Pass colors. Basic shader will use the packed U coord to lerp between these.
-    glUniform3fv(glGetUniformLocation(shader, "turfColor"), 1, &turfColor[0]);
-    glUniform3fv(glGetUniformLocation(shader, "wallColor"), 1, &wallColor[0]);
-    glUniform3fv(glGetUniformLocation(shader, "flagColor"), 1, &flagColor[0]);
-
+    glUniform3f(glGetUniformLocation(shader, "objectColor"),
+                col.x, col.y, col.z);
     glBindVertexArray(vao);
-    glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+    glDrawArrays(GL_TRIANGLES, 0, count);
     glBindVertexArray(0);
+}
+
+void GolfHole::draw(const glm::mat4 &view,
+                    const glm::mat4 &proj,
+                    const LightSet & /*lights*/)
+{
+    GLuint shader = ShaderManager::get("basic");
+    glUseProgram(shader);
+
+    glm::mat4 model = getModelMatrix();
+
+    drawBuffer(vao, vertexCount, shader, model, view, proj, turfColor);
+
+    if (hasSand && sandVertexCount > 0)
+    {
+        glm::vec3 sandColor(0.85f, 0.78f, 0.45f);
+        drawBuffer(sandVao, sandVertexCount, shader, model, view, proj, sandColor);
+    }
+
+    if (flagVertexCount > 0)
+    {
+        glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, &model[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, &view[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, &proj[0][0]);
+        glUniform3f(glGetUniformLocation(shader, "objectColor"), 0.8f, 0.8f, 0.8f);
+        glBindVertexArray(flagVao);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glUniform3f(glGetUniformLocation(shader, "objectColor"),
+                    flagColor.x, flagColor.y, flagColor.z);
+        glDrawArrays(GL_TRIANGLES, 6, flagVertexCount - 6);
+        glBindVertexArray(0);
+    }
 }
 
 void GolfHole::drawDepth(GLuint depthShader)
@@ -201,6 +465,7 @@ void GolfHole::drawDepth(GLuint depthShader)
     glUseProgram(depthShader);
     glm::mat4 model = getModelMatrix();
     glUniformMatrix4fv(glGetUniformLocation(depthShader, "model"), 1, GL_FALSE, &model[0][0]);
+
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, vertexCount);
     glBindVertexArray(0);
@@ -216,8 +481,10 @@ std::vector<AABB> GolfHole::getCollisionAABBs() const
         AABB w;
         w.min = glm::vec3(1e30f);
         w.max = glm::vec3(-1e30f);
+
         glm::vec3 corners[8] = {
             {localBox.min.x, localBox.min.y, localBox.min.z}, {localBox.max.x, localBox.min.y, localBox.min.z}, {localBox.min.x, localBox.max.y, localBox.min.z}, {localBox.max.x, localBox.max.y, localBox.min.z}, {localBox.min.x, localBox.min.y, localBox.max.z}, {localBox.max.x, localBox.min.y, localBox.max.z}, {localBox.min.x, localBox.max.y, localBox.max.z}, {localBox.max.x, localBox.max.y, localBox.max.z}};
+
         for (int i = 0; i < 8; i++)
         {
             glm::vec3 transformed = glm::vec3(model * glm::vec4(corners[i], 1.0f));

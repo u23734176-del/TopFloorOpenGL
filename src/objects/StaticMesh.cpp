@@ -1,6 +1,11 @@
 #include "StaticMesh.h"
 #include "../core/ShaderManager.h"
 #include "../core/ResourceManager.h"
+// StaticMesh.cpp — only draw() and drawDepth() changed.
+// Replace these two functions in your existing StaticMesh.cpp.
+
+// ---- ADD this include at the top of StaticMesh.cpp ----
+#include <glm/gtc/type_ptr.hpp>
 
 StaticMesh::StaticMesh(const std::vector<float> &geometry)
     : vao(0), vbo(0), vertexCount(0), vertexData(geometry)
@@ -57,22 +62,20 @@ void StaticMesh::draw(const glm::mat4 &view, const glm::mat4 &proj, const LightS
     glUseProgram(shader);
 
     glm::mat4 model = getModelMatrix();
-    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, &model[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, &view[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, &proj[0][0]);
-    glUniform3f(glGetUniformLocation(shader, "objectColor"), color.x, color.y, color.z);
+    ShaderManager::setMat4(shader, "model", glm::value_ptr(model));
+    ShaderManager::setMat4(shader, "view", glm::value_ptr(view));
+    ShaderManager::setMat4(shader, "projection", glm::value_ptr(proj));
+    ShaderManager::setVec3(shader, "objectColor", color.x, color.y, color.z);
 
-    // Texture binding hook for when Slice C is integrated
     if (hasTextureEnabled() && getTexture() != nullptr)
     {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, getTexture()->id);
-        // Note: Make sure "useTexture" is added to basic.frag later to toggle sampling
-        glUniform1i(glGetUniformLocation(shader, "useTexture"), 1);
+        ShaderManager::setInt(shader, "useTexture", 1);
     }
     else
     {
-        glUniform1i(glGetUniformLocation(shader, "useTexture"), 0);
+        ShaderManager::setInt(shader, "useTexture", 0);
     }
 
     glBindVertexArray(vao);
@@ -84,8 +87,7 @@ void StaticMesh::drawDepth(GLuint depthShader)
 {
     glUseProgram(depthShader);
     glm::mat4 model = getModelMatrix();
-    glUniformMatrix4fv(glGetUniformLocation(depthShader, "model"), 1, GL_FALSE, &model[0][0]);
-
+    ShaderManager::setMat4(depthShader, "model", glm::value_ptr(model));
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, vertexCount);
     glBindVertexArray(0);

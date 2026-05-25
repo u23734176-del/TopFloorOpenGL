@@ -31,6 +31,13 @@
 #include "ui/PostProcessor.h"
 #include "ui/HUD.h"
 
+// main.cpp patches — replace the two functions below in your existing main.cpp
+// and add the throttle block inside the game loop.
+
+// ---- ADD this include at the top of main.cpp ----
+// #include "core/ShaderManager.h"   (already there)
+#include <glm/gtc/type_ptr.hpp>
+
 const int WIDTH = 1000;
 const int HEIGHT = 800;
 const unsigned int SHADOW_WIDTH = 2048;
@@ -160,42 +167,78 @@ void updateLightingForDayNight(LightSet &lights, bool isNight)
     }
 }
 
+// ---------------------------------------------------------------------------
+// REPLACE passLightingUniforms with this version.
+// The function signature is unchanged — call sites don't need to change.
+//
+// Before: ~30 glGetUniformLocation calls per frame (driver round-trips)
+// After:  ~30 unordered_map lookups (first frame caches; subsequent frames
+//         are pure memory reads)
+// ---------------------------------------------------------------------------
 void passLightingUniforms(GLuint shaderProgram, const LightSet &lights, const glm::vec3 &cameraPos)
 {
-    glUniform3f(glGetUniformLocation(shaderProgram, "directional.direction"),
-                lights.directional.direction.x, lights.directional.direction.y, lights.directional.direction.z);
-    glUniform3f(glGetUniformLocation(shaderProgram, "directional.color"),
-                lights.directional.color.x, lights.directional.color.y, lights.directional.color.z);
-    glUniform3f(glGetUniformLocation(shaderProgram, "ambient"),
-                lights.ambient.x, lights.ambient.y, lights.ambient.z);
+    ShaderManager::setVec3(shaderProgram, "directional.direction",
+                           lights.directional.direction.x,
+                           lights.directional.direction.y,
+                           lights.directional.direction.z);
+    ShaderManager::setVec3(shaderProgram, "directional.color",
+                           lights.directional.color.x,
+                           lights.directional.color.y,
+                           lights.directional.color.z);
+    ShaderManager::setVec3(shaderProgram, "ambient",
+                           lights.ambient.x, lights.ambient.y, lights.ambient.z);
 
-    glUniform1i(glGetUniformLocation(shaderProgram, "numPointLights"), lights.numPointLights);
+    ShaderManager::setInt(shaderProgram, "numPointLights", lights.numPointLights);
+
+    // FIX: build the uniform name strings on the stack (snprintf, no heap alloc)
+    // Previously used std::string concatenation inside the loop — alloc per frame.
+    char buf[64];
     for (int i = 0; i < lights.numPointLights; ++i)
     {
-        std::string base = "pointLights[" + std::to_string(i) + "]";
-        glUniform3f(glGetUniformLocation(shaderProgram, (base + ".position").c_str()),
-                    lights.pointLights[i].position.x, lights.pointLights[i].position.y, lights.pointLights[i].position.z);
-        glUniform3f(glGetUniformLocation(shaderProgram, (base + ".color").c_str()),
-                    lights.pointLights[i].color.x, lights.pointLights[i].color.y, lights.pointLights[i].color.z);
-        glUniform1f(glGetUniformLocation(shaderProgram, (base + ".intensity").c_str()), lights.pointLights[i].intensity);
-        glUniform1f(glGetUniformLocation(shaderProgram, (base + ".radius").c_str()), lights.pointLights[i].radius);
-        glUniform1f(glGetUniformLocation(shaderProgram, (base + ".linear").c_str()), lights.pointLights[i].linear);
-        glUniform1f(glGetUniformLocation(shaderProgram, (base + ".quadratic").c_str()), lights.pointLights[i].quadratic);
+        snprintf(buf, sizeof(buf), "pointLights[%d].position", i);
+        ShaderManager::setVec3(shaderProgram, buf,
+                               lights.pointLights[i].position.x,
+                               lights.pointLights[i].position.y,
+                               lights.pointLights[i].position.z);
+
+        snprintf(buf, sizeof(buf), "pointLights[%d].color", i);
+        ShaderManager::setVec3(shaderProgram, buf,
+                               lights.pointLights[i].color.x,
+                               lights.pointLights[i].color.y,
+                               lights.pointLights[i].color.z);
+
+        snprintf(buf, sizeof(buf), "pointLights[%d].intensity", i);
+        ShaderManager::setFloat(shaderProgram, buf, lights.pointLights[i].intensity);
+
+        snprintf(buf, sizeof(buf), "pointLights[%d].radius", i);
+        ShaderManager::setFloat(shaderProgram, buf, lights.pointLights[i].radius);
+
+        snprintf(buf, sizeof(buf), "pointLights[%d].linear", i);
+        ShaderManager::setFloat(shaderProgram, buf, lights.pointLights[i].linear);
+
+        snprintf(buf, sizeof(buf), "pointLights[%d].quadratic", i);
+        ShaderManager::setFloat(shaderProgram, buf, lights.pointLights[i].quadratic);
     }
 
-    glUniform3f(glGetUniformLocation(shaderProgram, "spotlight.position"),
-                lights.spotlight.position.x, lights.spotlight.position.y, lights.spotlight.position.z);
-    glUniform3f(glGetUniformLocation(shaderProgram, "spotlight.direction"),
-                lights.spotlight.direction.x, lights.spotlight.direction.y, lights.spotlight.direction.z);
-    glUniform3f(glGetUniformLocation(shaderProgram, "spotlight.color"),
-                lights.spotlight.color.x, lights.spotlight.color.y, lights.spotlight.color.z);
-    glUniform1f(glGetUniformLocation(shaderProgram, "spotlight.intensity"), lights.spotlight.intensity);
-    glUniform1f(glGetUniformLocation(shaderProgram, "spotlight.innerCutoff"), lights.spotlight.innerCutoff);
-    glUniform1f(glGetUniformLocation(shaderProgram, "spotlight.outerCutoff"), lights.spotlight.outerCutoff);
-    glUniform1i(glGetUniformLocation(shaderProgram, "spotlightEnabled"), lights.spotlightEnabled ? 1 : 0);
-
-    glUniform1i(glGetUniformLocation(shaderProgram, "isNight"), lights.isNight ? 1 : 0);
-    glUniform3f(glGetUniformLocation(shaderProgram, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+    ShaderManager::setVec3(shaderProgram, "spotlight.position",
+                           lights.spotlight.position.x,
+                           lights.spotlight.position.y,
+                           lights.spotlight.position.z);
+    ShaderManager::setVec3(shaderProgram, "spotlight.direction",
+                           lights.spotlight.direction.x,
+                           lights.spotlight.direction.y,
+                           lights.spotlight.direction.z);
+    ShaderManager::setVec3(shaderProgram, "spotlight.color",
+                           lights.spotlight.color.x,
+                           lights.spotlight.color.y,
+                           lights.spotlight.color.z);
+    ShaderManager::setFloat(shaderProgram, "spotlight.intensity", lights.spotlight.intensity);
+    ShaderManager::setFloat(shaderProgram, "spotlight.innerCutoff", lights.spotlight.innerCutoff);
+    ShaderManager::setFloat(shaderProgram, "spotlight.outerCutoff", lights.spotlight.outerCutoff);
+    ShaderManager::setInt(shaderProgram, "spotlightEnabled", lights.spotlightEnabled ? 1 : 0);
+    ShaderManager::setInt(shaderProgram, "isNight", lights.isNight ? 1 : 0);
+    ShaderManager::setVec3(shaderProgram, "cameraPos",
+                           cameraPos.x, cameraPos.y, cameraPos.z);
 }
 
 glm::mat4 calculateLightSpaceMatrix(const LightSet &lights)
@@ -351,6 +394,9 @@ int main()
 
     float lastFrame = 0.0f;
 
+    // Add this before the while loop:
+      static float titleTimer = 0.0f;
+
     // ---------------------------------------------------------------------------
     // THE GAME LOOP
     // ---------------------------------------------------------------------------
@@ -423,13 +469,26 @@ int main()
         hud.draw(camera, WIDTH, HEIGHT, postProcessor.getMode());
 
         // Update Window Title
-        glm::vec3 camPos = camera.getPosition();
-        std::string modeText = (postProcessor.getMode() == 1) ? "Grayscale" : (postProcessor.getMode() == 2) ? "Inverted"
-                                                                                                             : "Normal";
-        std::string title = "Mini Golf | X:" + std::to_string((int)camPos.x) +
-                            " Y:" + std::to_string((int)camPos.y) +
-                            " Z:" + std::to_string((int)camPos.z) + " | " + modeText;
-        glfwSetWindowTitle(window, title.c_str());
+        // ---------------------------------------------------------------------------
+        // INSIDE the game loop, replace the window title block with this.
+        // Throttles the title update to once per second — was allocating strings
+        // and making a driver call every frame.
+        // ---------------------------------------------------------------------------
+
+        // Replace the title update block inside the loop with:
+            titleTimer += deltaTime;
+            if (titleTimer >= 1.0f)
+            {
+                titleTimer = 0.0f;
+                glm::vec3 camPos = camera.getPosition();
+                const char *modeText = (postProcessor.getMode() == 1) ? "Grayscale"
+                                     : (postProcessor.getMode() == 2) ? "Inverted"
+                                     : "Normal";
+                char title[128];
+                snprintf(title, sizeof(title), "Mini Golf | X:%d Y:%d Z:%d | %s",
+                         (int)camPos.x, (int)camPos.y, (int)camPos.z, modeText);
+                glfwSetWindowTitle(window, title);
+            }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
