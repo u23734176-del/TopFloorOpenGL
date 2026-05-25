@@ -4,8 +4,8 @@
 #include "../core/SceneObject.h"
 #include "../core/shader.hpp"
 
-// Rock: irregular blob rendered as a slightly squashed, faceted sphere.
-// Local space radius ~1. Squash with setScale.
+
+
 class Rock : public SceneObject
 {
 private:

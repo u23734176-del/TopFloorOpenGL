@@ -6,6 +6,6 @@ uniform samplerCube skybox;
 
 void main()
 {
-    // .rgb forces alpha to 1.0 regardless of the PNG's alpha channel
+    
     FragColor = vec4(texture(skybox, TexCoords).rgb, 1.0);
 }

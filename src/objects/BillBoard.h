@@ -7,8 +7,8 @@ class BillBoard : public StaticMesh
 {
 public:
     BillBoard() : StaticMesh({
-                     // ---> PASTE YOUR PYTHON VECTOR DATA HERE <---
-                     // Baked from BillBoard.obj | Vertices: 72
+                     
+                     
                          1.180468f, 0.704272f, -2.795273f, -0.0f, 1.0f, -0.0f, 0.625f, 0.5f,
                          -1.180468f, 0.704272f, -2.795273f, -0.0f, 1.0f, -0.0f, 0.875f, 0.5f,
                          -1.180468f, 0.704272f, 2.795273f, -0.0f, 1.0f, -0.0f, 0.875f, 0.75f,
@@ -83,9 +83,9 @@ public:
                          0.852738f, 2.667606f, 2.205303f, -0.0f, 1.0f, -0.0f, 0.625f, 0.75f
                  })
     {
-        // Default spawn state
+        
         setScale(glm::vec3(1.0f));
-        // Default colour
+        
         setColor(glm::vec3(0.55f, 0.55f, 0.58f));
     }
 };

@@ -26,7 +26,7 @@ public:
     float     getRoll()     const;
 
 private:
-    // one VAO per part
+    
     GLuint bodyVAO,  bodyCount;
     GLuint armVAO,   armCount;
     GLuint rotorVAO, rotorCount;
@@ -34,7 +34,7 @@ private:
 
     GLuint shaderProgram;
 
-    // drone state
+    
     glm::vec3 position;
     glm::vec3 front;
     glm::vec3 worldUp;
@@ -44,7 +44,7 @@ private:
 
     void updateFront();
 
-    // same style as your prac — returns vector<float> pos+colour
+    
     std::vector<float> makeSphere  (float r, int stacks, int slices, float cr, float cg, float cb);
     std::vector<float> makeCylinder(float r, float h, int slices,    float cr, float cg, float cb);
     std::vector<float> makeDisc    (float r, int slices,             float cr, float cg, float cb);

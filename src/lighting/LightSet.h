@@ -2,19 +2,19 @@
 #define LIGHTSET_H
 
 #include <glm/glm.hpp>
-#include <GL/glew.h> // for glGetUniformLocation, etc.
+#include <GL/glew.h> 
 
-// =====================================
-// Directional Light (Sun/Moon)
-// =====================================
+
+
+
 struct DirectionalLight {
     glm::vec3 direction;
     glm::vec3 color;
 };
 
-// =====================================
-// Point Light (with attenuation)
-// =====================================
+
+
+
 struct PointLight {
     glm::vec3 position;
     glm::vec3 color;
@@ -24,9 +24,9 @@ struct PointLight {
     float quadratic;
 };
 
-// =====================================
-// Spotlight (inner/outer cones)
-// =====================================
+
+
+
 struct SpotLight {
     glm::vec3 position;
     glm::vec3 direction;
@@ -36,9 +36,9 @@ struct SpotLight {
     float outerCutoff;
 };
 
-// =====================================
-// Global Lighting Set
-// =====================================
+
+
+
 struct LightSet {
     DirectionalLight directional;
     glm::vec3 ambient;

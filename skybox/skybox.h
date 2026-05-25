@@ -10,8 +10,8 @@ class Skybox {
 public:
     Skybox();
     ~Skybox();
-    // dayFaces / nightFaces: 6 paths in order:
-    //   right, left, top, bottom, front, back
+    
+    
     bool build(const std::vector<std::string>& dayFaces,  const std::vector<std::string>& nightFaces);
     void draw(const glm::mat4& view, const glm::mat4& projection, bool isNight);
 

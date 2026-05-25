@@ -7,8 +7,8 @@ class BenchTable : public StaticMesh
 {
 public:
     BenchTable() : StaticMesh({
-                     // ---> PASTE YOUR PYTHON VECTOR DATA HERE <---
-                     // Baked from Bench_Table.obj | Vertices: 180
+                     
+                     
                          1.0f, 2.064245f, -2.604058f, -0.0f, 1.0f, -0.0f, 0.625f, 0.5f,
                          -1.0f, 2.064245f, -2.604058f, -0.0f, 1.0f, -0.0f, 0.875f, 0.5f,
                          -1.0f, 2.064245f, 2.604058f, -0.0f, 1.0f, -0.0f, 0.875f, 0.75f,
@@ -191,9 +191,9 @@ public:
                          -0.261527f, 1.885692f, 2.374897f, 0.3109f, 0.9504f, -0.0f, 0.625f, 0.75f
                  })
     {
-        // Default spawn state
+        
         setScale(glm::vec3(1.0f));
-        // Default colour
+        
         setColor(glm::vec3(0.45f, 0.28f, 0.15f));
     }
 };

@@ -4,7 +4,7 @@
 #include <cstdio>
 #include "../objects/AssimpModel.h"
 
-// Initialize static member
+
 ResourceManager* ResourceManager::instance = nullptr;
 
 ResourceManager::ResourceManager() {
@@ -24,7 +24,7 @@ ResourceManager* ResourceManager::getInstance() {
 }
 
 Texture* ResourceManager::loadTexture(const std::string& filePath) {
-    // Check if already loaded
+    
     auto it = textures.find(filePath);
     if (it != textures.end()) {
         it->second->refCount++;
@@ -33,13 +33,13 @@ Texture* ResourceManager::loadTexture(const std::string& filePath) {
         return it->second;
     }
     
-    // Check OpenGL context
+    
     if (!glGetString(GL_VERSION)) {
         std::cerr << "Error: No OpenGL context active when loading texture: " << filePath << std::endl;
         return nullptr;
     }
     
-    // Check if file exists
+    
     FILE* file = fopen(filePath.c_str(), "r");
     if (!file) {
         std::cerr << "Error: Texture file not found: " << filePath << std::endl;
@@ -49,7 +49,7 @@ Texture* ResourceManager::loadTexture(const std::string& filePath) {
     
     int width, height, channels;
     
-    // Flip vertically since OpenGL expects 0,0 at bottom-left
+    
     stbi_set_flip_vertically_on_load(true);
     
     unsigned char* data = stbi_load(filePath.c_str(), &width, &height, &channels, 0);
@@ -60,7 +60,7 @@ Texture* ResourceManager::loadTexture(const std::string& filePath) {
         return nullptr;
     }
     
-    // Determine OpenGL format
+    
     GLenum format;
     switch (channels) {
         case 1: format = GL_RED; break;
@@ -72,31 +72,31 @@ Texture* ResourceManager::loadTexture(const std::string& filePath) {
             return nullptr;
     }
     
-    // Generate OpenGL texture
+    
     GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
     
-    // Upload texture data
+    
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
     
-    // Set texture parameters
+    
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     
-    // Unbind texture
+    
     glBindTexture(GL_TEXTURE_2D, 0);
     
-    // Free stb image data
+    
     stbi_image_free(data);
     
-    // Create texture object
+    
     Texture* texture = new Texture(textureID, width, height, channels, filePath);
     
-    // Store in cache
+    
     textures[filePath] = texture;
     
     std::cout << "Texture loaded successfully: " << filePath 
@@ -181,9 +181,9 @@ void ResourceManager::unloadAllModels()
         delete pair.second;
     models.clear();
 }
-// Add to destructor: unloadAllModels();
 
-// Static cleanup function
+
+
 void cleanupResourceManager() {
     delete ResourceManager::getInstance();
 }

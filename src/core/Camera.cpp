@@ -18,7 +18,7 @@ Camera::Camera() {
 }
 void Camera::setFirstPerson(const glm::vec3& pos, const glm::vec3& droneF)
 {
-    // offset forward and up so camera sits just in front of the drone body
+    
     position = pos + droneF * 0.4f + glm::vec3(0.0f, 0.15f, 0.0f);
 
     yaw   = glm::degrees(atan2(droneF.z, droneF.x));
@@ -73,9 +73,9 @@ void Camera::processInput(GLFWwindow* window, float deltaTime)
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) velocity *= 2.0f;
 
     
-    // =========================
-    // MOVEMENT
-    // =========================
+    
+    
+    
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         position += front * velocity;
@@ -91,9 +91,9 @@ void Camera::processInput(GLFWwindow* window, float deltaTime)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         position += right * velocity;
 
-    // =========================
-    // ROTATION
-    // =========================
+    
+    
+    
 
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
         yaw -= rotationSpeed;
@@ -107,16 +107,16 @@ void Camera::processInput(GLFWwindow* window, float deltaTime)
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         pitch -= rotationSpeed;
 
-    // Prevent camera flipping
+    
     if (pitch > 89.0f)
         pitch = 89.0f;
 
     if (pitch < -89.0f)
         pitch = -89.0f;
 
-    // =========================
-    // UPDATE FRONT VECTOR
-    // =========================
+    
+    
+    
 
     glm::vec3 direction;
 
@@ -126,7 +126,7 @@ void Camera::processInput(GLFWwindow* window, float deltaTime)
 
     front = glm::normalize(direction);
 
-     // roll on three axes (Q/E)
+     
     float rollSpeed = 60.0f * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         roll -= rollSpeed;

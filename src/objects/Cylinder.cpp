@@ -5,7 +5,7 @@
 #include <cmath>
 #include <vector>
 
-// Layout: position(3) + normal(3) = 6 floats per vertex
+
 
 Cylinder::Cylinder(int segs)
     : vao(0), vbo(0), vertexCount(0), segments(segs)
@@ -13,10 +13,10 @@ Cylinder::Cylinder(int segs)
 
 void Cylinder::build()
 {
-    // We build:
-    //  - side quads  : 2 triangles * segments
-    //  - top cap     : segments triangles (fan)
-    //  - bottom cap  : segments triangles (fan)
+    
+    
+    
+    
 
     std::vector<float> verts;
     verts.reserve(segments * (2 + 1 + 1) * 3 * 6);
@@ -24,22 +24,22 @@ void Cylinder::build()
     const float PI  = 3.14159265358979f;
     const float TWO_PI = 2.0f * PI;
 
-    // ---- SIDE ----
+    
     for (int i = 0; i < segments; ++i)
     {
         float a0 = (float)i       / segments * TWO_PI;
         float a1 = (float)(i + 1) / segments * TWO_PI;
 
-        glm::vec3 p00(cosf(a0), -1.0f, sinf(a0));  // bottom-left
-        glm::vec3 p10(cosf(a1), -1.0f, sinf(a1));  // bottom-right
-        glm::vec3 p01(cosf(a0),  1.0f, sinf(a0));  // top-left
-        glm::vec3 p11(cosf(a1),  1.0f, sinf(a1));  // top-right
+        glm::vec3 p00(cosf(a0), -1.0f, sinf(a0));  
+        glm::vec3 p10(cosf(a1), -1.0f, sinf(a1));  
+        glm::vec3 p01(cosf(a0),  1.0f, sinf(a0));  
+        glm::vec3 p11(cosf(a1),  1.0f, sinf(a1));  
 
-        // normals point outward (no y component for a side face)
+        
         glm::vec3 n0 = glm::normalize(glm::vec3(cosf(a0), 0.0f, sinf(a0)));
         glm::vec3 n1 = glm::normalize(glm::vec3(cosf(a1), 0.0f, sinf(a1)));
 
-        // tri 1: p00, p10, p01
+        
         auto push = [&](const glm::vec3& p, const glm::vec3& n) {
             verts.push_back(p.x); verts.push_back(p.y); verts.push_back(p.z);
             verts.push_back(n.x); verts.push_back(n.y); verts.push_back(n.z);
@@ -49,7 +49,7 @@ void Cylinder::build()
         push(p10, n1); push(p11, n1); push(p01, n0);
     }
 
-    // ---- TOP CAP (y = +1, normal = +Y) ----
+    
     {
         glm::vec3 centre(0.0f, 1.0f, 0.0f);
         glm::vec3 norm(0.0f, 1.0f, 0.0f);
@@ -68,7 +68,7 @@ void Cylinder::build()
         }
     }
 
-    // ---- BOTTOM CAP (y = -1, normal = -Y) ----
+    
     {
         glm::vec3 centre(0.0f, -1.0f, 0.0f);
         glm::vec3 norm(0.0f, -1.0f, 0.0f);
@@ -83,14 +83,14 @@ void Cylinder::build()
                 verts.push_back(p.x); verts.push_back(p.y); verts.push_back(p.z);
                 verts.push_back(norm.x); verts.push_back(norm.y); verts.push_back(norm.z);
             };
-            // wind opposite so bottom face is visible from below
+            
             push3(centre); push3(p1); push3(p0);
         }
     }
 
     vertexCount = (int)(verts.size() / 6);
 
-    // Compute AABB in local space (unit cylinder: radius 1, half-height 1)
+    
     initAABBFromPrimitive(glm::vec3(1.0f, 1.0f, 1.0f));
 
     glGenVertexArrays(1, &vao);
@@ -103,11 +103,11 @@ void Cylinder::build()
                  verts.data(),
                  GL_STATIC_DRAW);
 
-    // position
+    
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // normal
+    
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
                           (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
@@ -118,7 +118,7 @@ void Cylinder::build()
 
 void Cylinder::draw(const glm::mat4& view,
                     const glm::mat4& proj,
-                    const LightSet&  /*lights*/)
+                    const LightSet&  )
 {
     GLuint shader = ShaderManager::get("basic");
     glUseProgram(shader);

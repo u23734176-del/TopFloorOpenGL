@@ -12,17 +12,17 @@ Tunnel::Tunnel()
 
 void Tunnel::build()
 {
-    // We build only the UPPER half of the cylinder (the arch) so the
-    // ball can pass through the bottom.
-    // Full tunnel: angle from 0 to PI (top half) for both inner and outer rings,
-    // plus the two annular end-caps.
+    
+    
+    
+    
 
     const float PI     = 3.14159265358979f;
     const float r      = tunnelRadius;
     const float ro     = r + wallThickness;
     const float hl     = tunnelLength * 0.5f;
-    int         segs   = segments; // full circle segments (we'll use upper half)
-    int         halfS  = segs;     // use all segments for a full arch
+    int         segs   = segments; 
+    int         halfS  = segs;     
 
     std::vector<float> verts;
 
@@ -31,7 +31,7 @@ void Tunnel::build()
         verts.push_back(n.x); verts.push_back(n.y); verts.push_back(n.z);
     };
 
-    // ---- OUTER SURFACE ---- (normals point outward)
+    
     for (int i = 0; i < segs; ++i)
     {
         float a0 = (float)i       / segs * 2.0f * PI;
@@ -49,7 +49,7 @@ void Tunnel::build()
         pushV(o10, n1); pushV(o11, n1); pushV(o01, n0);
     }
 
-    // ---- INNER SURFACE ---- (normals point inward)
+    
     for (int i = 0; i < segs; ++i)
     {
         float a0 = (float)i       / segs * 2.0f * PI;
@@ -60,15 +60,15 @@ void Tunnel::build()
         glm::vec3 i01(r * cosf(a0), r * sinf(a0),  hl);
         glm::vec3 i11(r * cosf(a1), r * sinf(a1),  hl);
 
-        glm::vec3 n0(-cosf(a0), -sinf(a0), 0.0f); // inward
+        glm::vec3 n0(-cosf(a0), -sinf(a0), 0.0f); 
         glm::vec3 n1(-cosf(a1), -sinf(a1), 0.0f);
 
-        // Reverse winding for inward face
+        
         pushV(i01, n0); pushV(i10, n1); pushV(i00, n0);
         pushV(i01, n0); pushV(i11, n1); pushV(i10, n1);
     }
 
-    // ---- ANNULAR END CAPS (front and back) ----
+    
     glm::vec3 frontN(0.0f, 0.0f,  1.0f);
     glm::vec3 backN (0.0f, 0.0f, -1.0f);
 
@@ -77,7 +77,7 @@ void Tunnel::build()
         float a0 = (float)i       / segs * 2.0f * PI;
         float a1 = (float)(i + 1) / segs * 2.0f * PI;
 
-        // Front cap (z = +hl)
+        
         glm::vec3 fi0(r  * cosf(a0), r  * sinf(a0),  hl);
         glm::vec3 fi1(r  * cosf(a1), r  * sinf(a1),  hl);
         glm::vec3 fo0(ro * cosf(a0), ro * sinf(a0),  hl);
@@ -86,7 +86,7 @@ void Tunnel::build()
         pushV(fi0, frontN); pushV(fo1, frontN); pushV(fi1, frontN);
         pushV(fi0, frontN); pushV(fo0, frontN); pushV(fo1, frontN);
 
-        // Back cap (z = -hl)
+        
         glm::vec3 bi0(r  * cosf(a0), r  * sinf(a0), -hl);
         glm::vec3 bi1(r  * cosf(a1), r  * sinf(a1), -hl);
         glm::vec3 bo0(ro * cosf(a0), ro * sinf(a0), -hl);
@@ -117,7 +117,7 @@ void Tunnel::build()
 
 void Tunnel::draw(const glm::mat4& view,
                    const glm::mat4& proj,
-                   const LightSet&  /*lights*/)
+                   const LightSet&  )
 {
     GLuint shader = ShaderManager::get("basic");
     glUseProgram(shader);

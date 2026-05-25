@@ -7,8 +7,8 @@ class LightPost : public StaticMesh
 {
 public:
     LightPost() : StaticMesh({
-                     // ---> PASTE YOUR PYTHON VECTOR DATA HERE <---
-                     // Baked from Light_post_2.obj | Vertices: 180
+                     
+                     
                          0.164553f, 7.932838f, -0.164553f, -0.0f, 1.0f, -0.0f, 0.625f, 0.5f,
                          -0.164553f, 7.932838f, -0.164553f, -0.0f, 1.0f, -0.0f, 0.875f, 0.5f,
                          -0.164553f, 7.932838f, 0.164553f, -0.0f, 1.0f, -0.0f, 0.875f, 0.75f,
@@ -191,9 +191,9 @@ public:
                          3.780488f, 8.443628f, 0.265126f, -0.0f, 1.0f, -0.0f, 0.625f, 0.75f
                  })
     {
-        // Default spawn state
+        
         setScale(glm::vec3(1.0f));
-        // Default colour
+        
         setColor(glm::vec3(0.55f, 0.55f, 0.58f));
     }
 };

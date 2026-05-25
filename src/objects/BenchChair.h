@@ -7,8 +7,8 @@ class BenchChair : public StaticMesh
 {
 public:
     BenchChair() : StaticMesh({
-                     // ---> PASTE YOUR PYTHON VECTOR DATA HERE <---
-                     // Baked from bench_Chair.obj | Vertices: 180
+                     
+                     
                          1.375439f, 0.487018f, -0.388565f, -0.0f, 1.0f, -0.0f, 0.625f, 0.5f,
                          -1.375439f, 0.487018f, -0.388565f, -0.0f, 1.0f, -0.0f, 0.875f, 0.5f,
                          -1.375439f, 0.487018f, 0.388565f, -0.0f, 1.0f, -0.0f, 0.875f, 0.75f,
@@ -191,9 +191,9 @@ public:
                          -1.155517f, 0.406575f, -0.226367f, -0.0028f, 0.9941f, 0.1081f, 0.625f, 0.75f
                  })
     {
-        // Default spawn state
+        
         setScale(glm::vec3(1.0f));
-        // Default colour
+        
         setColor(glm::vec3(0.45f, 0.28f, 0.15f));
     }
 };

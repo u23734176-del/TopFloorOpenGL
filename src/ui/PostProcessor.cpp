@@ -3,7 +3,7 @@
 
 float quadVertices[] = {
 
-    // positions   // texCoords
+    
 
     -1.0f,  1.0f,  0.0f, 1.0f,
     -1.0f, -1.0f,  0.0f, 0.0f,
@@ -26,16 +26,16 @@ void PostProcessor::build(int width, int height)
         "shaders/post.frag"
     );
 
-    // =========================================
-    // Framebuffer
-    // =========================================
+    
+    
+    
 
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    // =========================================
-    // Texture Color Buffer
-    // =========================================
+    
+    
+    
 
     glGenTextures(1, &textureColorBuffer);
     glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
@@ -63,9 +63,9 @@ void PostProcessor::build(int width, int height)
         0
     );
 
-    // =========================================
-    // Render Buffer Object
-    // =========================================
+    
+    
+    
 
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -86,9 +86,9 @@ void PostProcessor::build(int width, int height)
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // =========================================
-    // Fullscreen Quad
-    // =========================================
+    
+    
+    
 
     glGenVertexArrays(1, &quadVAO);
     glGenBuffers(1, &quadVBO);
@@ -104,7 +104,7 @@ void PostProcessor::build(int width, int height)
         GL_STATIC_DRAW
     );
 
-    // position
+    
     glVertexAttribPointer(
         0,
         2,
@@ -116,7 +116,7 @@ void PostProcessor::build(int width, int height)
 
     glEnableVertexAttribArray(0);
 
-    // tex coords
+    
     glVertexAttribPointer(
         1,
         2,
@@ -151,11 +151,11 @@ void PostProcessor::draw()
 
     glUseProgram(shader);
     glUniform1i(glGetUniformLocation(shader, "mode"), mode);
-    glUniform1i(glGetUniformLocation(shader, "screenTexture"), 0); // ← add
+    glUniform1i(glGetUniformLocation(shader, "screenTexture"), 0); 
 
     glBindVertexArray(quadVAO);
 
-    glActiveTexture(GL_TEXTURE0);                         // ← add
+    glActiveTexture(GL_TEXTURE0);                         
     glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);

@@ -6,8 +6,8 @@ in vec4 FragPosLightSpace;
 
 out vec4 FragColor;
 
-// Light structures mirror LightSet.h / basic.frag exactly so main.cpp's
-// existing passLightingUniforms() works on this program unchanged.
+
+
 struct DirectionalLight { vec3 direction; vec3 color; };
 struct PointLight { vec3 position; vec3 color; float intensity; float radius; float linear; float quadratic; };
 struct SpotLight { vec3 position; vec3 direction; vec3 color; float intensity; float innerCutoff; float outerCutoff; };
@@ -26,10 +26,10 @@ uniform bool isNight;
 uniform vec3 cameraPos;
 uniform sampler2D shadowMap;
 
-uniform vec3 objectColor = vec3(0.1, 0.3, 0.5);   // default watery blue
-uniform float shininess = 128.0;                  // HIGH specular for water sheen
+uniform vec3 objectColor = vec3(0.1, 0.3, 0.5);   
+uniform float shininess = 128.0;                  
 
-// Water transparency: this is the whole point of a separate shader.
+
 uniform float alpha = 0.55;
 
 float calcShadow(vec4 fragPosLightSpace, vec3 norm, vec3 lightDir)
@@ -109,6 +109,6 @@ void main()
     if (spotlightEnabled)
         result += calcSpotLight(spotlight, norm, FragPos, viewDir);
 
-    // The one meaningful difference from basic.frag: alpha-blended output.
+    
     FragColor = vec4(result, alpha);
 }

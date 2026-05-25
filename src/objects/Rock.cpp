@@ -7,12 +7,12 @@
 
 Rock::Rock() : vao(0), vbo(0), vertexCount(0) {}
 
-// Simple deterministic "noise" — good enough for a rock without rand()
+
 static float rockNoise(float x, float y, float z)
 {
-    // Cheap hash
+    
     float v = sinf(x * 127.1f + y * 311.7f + z * 74.7f) * 43758.5453f;
-    return v - floorf(v);  // [0,1)
+    return v - floorf(v);  
 }
 
 void Rock::build()
@@ -21,7 +21,7 @@ void Rock::build()
     const int   slices   = 12;
     const float PI       = 3.14159265358979f;
     const float TWO_PI   = 2.0f * PI;
-    const float displAmt = 0.18f;   // how rough the rock looks
+    const float displAmt = 0.18f;   
 
     std::vector<float> verts;
     verts.reserve(stacks * slices * 6 * 6);
@@ -30,7 +30,7 @@ void Rock::build()
         glm::vec3 p(sinf(phi) * cosf(theta),
                     cosf(phi),
                     sinf(phi) * sinf(theta));
-        // displace outward a little to break the perfect sphere
+        
         float d = 1.0f + displAmt * (rockNoise(p.x, p.y, p.z) - 0.5f);
         return p * d;
     };
@@ -49,7 +49,7 @@ void Rock::build()
             glm::vec3 p01 = spherePt(phi1, theta0);
             glm::vec3 p11 = spherePt(phi1, theta1);
 
-            // Face normal (flat shading per quad — gives rocky faceted look)
+            
             glm::vec3 n0 = glm::normalize(glm::cross(p10 - p00, p01 - p00));
             glm::vec3 n1 = glm::normalize(glm::cross(p01 - p10, p11 - p10));
 
@@ -58,15 +58,15 @@ void Rock::build()
                 verts.push_back(n.x); verts.push_back(n.y); verts.push_back(n.z);
             };
 
-            // tri 1
+            
             push(p00, n0); push(p10, n0); push(p01, n0);
-            // tri 2
+            
             push(p10, n1); push(p11, n1); push(p01, n1);
         }
     }
 
     vertexCount = (int)(verts.size() / 6);
-    initAABBFromPrimitive(glm::vec3(1.2f, 1.2f, 1.2f)); // slightly bigger than unit sphere
+    initAABBFromPrimitive(glm::vec3(1.2f, 1.2f, 1.2f)); 
 
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
@@ -90,7 +90,7 @@ void Rock::build()
 
 void Rock::draw(const glm::mat4& view,
                 const glm::mat4& proj,
-                const LightSet&  /*lights*/)
+                const LightSet&  )
 {
     GLuint shader = ShaderManager::get("basic");
     glUseProgram(shader);

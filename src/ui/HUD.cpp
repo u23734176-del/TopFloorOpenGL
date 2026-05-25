@@ -16,16 +16,16 @@ void HUD::build()
 {
     float crosshairVertices[] =
     {
-        // Horizontal line
+        
         -0.02f,  0.0f,
         0.02f,  0.0f,
 
-        // Vertical line
+        
         0.0f, -0.02f,
         0.0f,  0.02f
     };
 
-    // Create VAO + VBO
+    
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 
@@ -54,7 +54,7 @@ void HUD::build()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    // Load shaders
+    
     shaderProgram = LoadShaders(
         "shaders/hud.vert",
         "shaders/hud.frag"
@@ -63,13 +63,13 @@ void HUD::build()
 
 void HUD::draw(Camera& camera, int width, int height, int mode)
 {
-    // HUD should render on top
+    
     glDisable(GL_DEPTH_TEST);
 
-    // Use HUD shader
+    
     glUseProgram(shaderProgram);
 
-    // Draw crosshair
+    
     glBindVertexArray(VAO);
 
     glDrawArrays(GL_LINES, 0, 4);
@@ -78,6 +78,6 @@ void HUD::draw(Camera& camera, int width, int height, int mode)
 
     glUseProgram(0);
 
-    // Re-enable depth testing
+    
     glEnable(GL_DEPTH_TEST);
 }

@@ -20,7 +20,7 @@ protected:
     glm::vec3 color;
     AABB aabb;
     
-    // Texture handling (raw pointer with manual ref counting)
+    
     Texture* texture;
     bool hasTexture;
     std::string texturePath;
@@ -47,27 +47,27 @@ public:
     glm::vec3 getColor() const;
     glm::mat4 getModelMatrix() const;
     
-    // Texture loading (uses ResourceManager)
+    
     bool loadTexture(const std::string& filePath);
     
-    // Release texture
+    
     void releaseTexture();
     
-    // Get texture for binding
+    
     Texture* getTexture() const;
     bool hasTextureEnabled() const;
     
-    // For AABB
+    
     AABB getLocalAABB() const;
     AABB getWorldAABB() const;
 
-    // For complex objects to return granular hitboxes (like GolfHole walls)
+    
     virtual std::vector<AABB> getCollisionAABBs() const;
 
     virtual bool isTransparent() const { return false; }
 
 protected:
-    // Helper for initializing AABB
+    
     void initAABBFromVertices(const std::vector<glm::vec3>& vertices);
     void initAABBFromPrimitive(const glm::vec3& halfExtents);
 };

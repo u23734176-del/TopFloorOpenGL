@@ -6,17 +6,17 @@ void applyLightSet(const LightSet &lights, GLuint shaderProgram)
 {
     glUseProgram(shaderProgram);
 
-    // --- Ambient ---
+    
     glUniform3fv(glGetUniformLocation(shaderProgram, "ambientLight"), 1,
                  glm::value_ptr(lights.ambient));
 
-    // --- Directional light ---
+    
     glUniform3fv(glGetUniformLocation(shaderProgram, "dirLight.direction"), 1,
                  glm::value_ptr(lights.directional.direction));
     glUniform3fv(glGetUniformLocation(shaderProgram, "dirLight.color"), 1,
                  glm::value_ptr(lights.directional.color));
 
-    // --- Point lights ---
+    
     glUniform1i(glGetUniformLocation(shaderProgram, "numPointLights"),
                 lights.numPointLights);
     for (int i = 0; i < lights.numPointLights && i < LightSet::MAX_POINT_LIGHTS; ++i)
@@ -37,7 +37,7 @@ void applyLightSet(const LightSet &lights, GLuint shaderProgram)
                     p.quadratic);
     }
 
-    // --- Spotlight ---
+    
     glUniform1i(glGetUniformLocation(shaderProgram, "spotlight.enabled"),
                 lights.spotlightEnabled ? 1 : 0);
     if (lights.spotlightEnabled)

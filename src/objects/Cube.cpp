@@ -6,7 +6,7 @@
 
 float vertices[] = {
 
-    // FRONT FACE
+    
     -1.0f, -1.0f,  1.0f,   0.0f, 0.0f, 1.0f,
      1.0f, -1.0f,  1.0f,   0.0f, 0.0f, 1.0f,
      1.0f,  1.0f,  1.0f,   0.0f, 0.0f, 1.0f,
@@ -15,7 +15,7 @@ float vertices[] = {
     -1.0f,  1.0f,  1.0f,   0.0f, 0.0f, 1.0f,
     -1.0f, -1.0f,  1.0f,   0.0f, 0.0f, 1.0f,
 
-    // BACK FACE
+    
     -1.0f, -1.0f, -1.0f,   0.0f, 0.0f,-1.0f,
     -1.0f,  1.0f, -1.0f,   0.0f, 0.0f,-1.0f,
      1.0f,  1.0f, -1.0f,   0.0f, 0.0f,-1.0f,
@@ -24,7 +24,7 @@ float vertices[] = {
      1.0f, -1.0f, -1.0f,   0.0f, 0.0f,-1.0f,
     -1.0f, -1.0f, -1.0f,   0.0f, 0.0f,-1.0f,
 
-    // LEFT FACE
+    
     -1.0f,  1.0f,  1.0f,  -1.0f, 0.0f, 0.0f,
     -1.0f,  1.0f, -1.0f,  -1.0f, 0.0f, 0.0f,
     -1.0f, -1.0f, -1.0f,  -1.0f, 0.0f, 0.0f,
@@ -33,7 +33,7 @@ float vertices[] = {
     -1.0f, -1.0f,  1.0f,  -1.0f, 0.0f, 0.0f,
     -1.0f,  1.0f,  1.0f,  -1.0f, 0.0f, 0.0f,
 
-    // RIGHT FACE
+    
      1.0f,  1.0f,  1.0f,   1.0f, 0.0f, 0.0f,
      1.0f, -1.0f, -1.0f,   1.0f, 0.0f, 0.0f,
      1.0f,  1.0f, -1.0f,   1.0f, 0.0f, 0.0f,
@@ -42,7 +42,7 @@ float vertices[] = {
      1.0f,  1.0f,  1.0f,   1.0f, 0.0f, 0.0f,
      1.0f, -1.0f,  1.0f,   1.0f, 0.0f, 0.0f,
 
-    // TOP FACE
+    
     -1.0f,  1.0f, -1.0f,   0.0f, 1.0f, 0.0f,
     -1.0f,  1.0f,  1.0f,   0.0f, 1.0f, 0.0f,
      1.0f,  1.0f,  1.0f,   0.0f, 1.0f, 0.0f,
@@ -51,7 +51,7 @@ float vertices[] = {
      1.0f,  1.0f, -1.0f,   0.0f, 1.0f, 0.0f,
     -1.0f,  1.0f, -1.0f,   0.0f, 1.0f, 0.0f,
 
-    // BOTTOM FACE
+    
     -1.0f, -1.0f, -1.0f,   0.0f,-1.0f, 0.0f,
      1.0f, -1.0f, -1.0f,   0.0f,-1.0f, 0.0f,
      1.0f, -1.0f,  1.0f,   0.0f,-1.0f, 0.0f,
@@ -99,7 +99,7 @@ void Cube::build()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    initAABBFromPrimitive(glm::vec3(1.0f)); // cube geometry spans ±1.0; scale applied by getWorldAABB
+    initAABBFromPrimitive(glm::vec3(1.0f)); 
 }
 
 void Cube::draw(

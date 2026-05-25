@@ -31,13 +31,13 @@ All lighting data goes into one `LightSet` struct (see `lighting/LightSet.h`):
 
 ```cpp
 struct LightSet {
-    DirectionalLight directional;  // sun or moon
-    vec3 ambient;                  // global ambient color
-    PointLight pointLights[4];     // up to 4 point lights
+    DirectionalLight directional;  
+    vec3 ambient;                  
+    PointLight pointLights[4];     
     int numPointLights;
-    SpotLight spotlight;           // drone lamp
+    SpotLight spotlight;           
     bool spotlightEnabled;
-    bool isNight;                  // toggle for day/night
+    bool isNight;                  
 };
 ```
 
@@ -69,7 +69,7 @@ uniform SpotLight spotlight;
 uniform bool spotlightEnabled;
 uniform bool isNight;
 uniform vec3 cameraPos;
-uniform vec3 objectColor;       // can vary per object
+uniform vec3 objectColor;       
 uniform float shininess = 32.0;
 ```
 
@@ -108,7 +108,7 @@ Cone-based falloff with smooth edge transition:
 ```glsl
 theta = dot(lightDir, normalize(-spotDir));
 epsilon = innerCutoff − outerCutoff;
-intensity = smoothstep(outerCutoff, innerCutoff, theta);  // smooth falloff
+intensity = smoothstep(outerCutoff, innerCutoff, theta);  
 ```
 
 **Angles stored as cosines:**
@@ -172,19 +172,19 @@ Before any object tries to use this lighting:
 Once you see the course lit up, tweak these:
 
 ```cpp
-// In updateLightingForDayNight():
 
-// DAY MODE
-lights.directional.direction   // sun angle
-lights.directional.color       // sun warmth
-lights.ambient                 // sky brightness
 
-// NIGHT MODE
-lights.directional.color       // moon color (cool → warm)
-lights.ambient                 // minimum visibility
-lights.pointLights[i].intensity // strength of path lights
-lights.pointLights[i].position // placement
-lights.pointLights[i].linear   // falloff curve
+
+lights.directional.direction   
+lights.directional.color       
+lights.ambient                 
+
+
+lights.directional.color       
+lights.ambient                 
+lights.pointLights[i].intensity 
+lights.pointLights[i].position 
+lights.pointLights[i].linear   
 ```
 
 Tweak until it looks good. No magic numbers; just iterate.

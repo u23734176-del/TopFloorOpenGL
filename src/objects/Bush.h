@@ -7,8 +7,8 @@ class Bush : public StaticMesh
 {
 public:
     Bush() : StaticMesh({
-                     // ---> PASTE YOUR PYTHON VECTOR DATA HERE <---
-                     // Baked from Bush.obj | Vertices: 8640
+                     
+                     
                          0.0f, 2.656217f, -3.326978f, 0.0975f, 0.0975f, -0.9904f, 0.75f, 0.5f,
                          0.0f, 3.305279f, -3.263051f, 0.0975f, 0.0975f, -0.9904f, 0.75f, 0.5625f,
                          0.63659f, 3.305279f, -3.200352f, 0.0975f, 0.0975f, -0.9904f, 0.71875f, 0.5625f,
@@ -8651,9 +8651,9 @@ public:
                          1.643035f, 0.217849f, 2.56884f, -0.0464f, -0.881f, -0.4709f, 0.75f, 0.125f
                  })
     {
-        // Default spawn state
+        
         setScale(glm::vec3(1.0f));
-        // Default colour
+        
         setColor(glm::vec3(0.2f, 0.5f, 0.2f));
     }
 };

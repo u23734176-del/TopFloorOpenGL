@@ -5,9 +5,9 @@
 #include <cmath>
 #include <vector>
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+
+
+
 
 static void pushVert(std::vector<float> &buf,
                      const glm::vec3 &p, const glm::vec3 &n)
@@ -20,7 +20,7 @@ static void pushVert(std::vector<float> &buf,
     buf.push_back(n.z);
 }
 
-// Rotate a point around the Y axis (degrees)
+
 static glm::vec3 rotY(const glm::vec3 &p, float deg)
 {
     float r = glm::radians(deg);
@@ -36,17 +36,17 @@ static glm::vec2 norm2(glm::vec2 v)
     return (L > 1e-9f) ? v / L : glm::vec2(0.0f);
 }
 
-// ---------------------------------------------------------------------------
-// GolfHole
-// ---------------------------------------------------------------------------
+
+
+
 
 GolfHole::GolfHole()
     : holeWidth(4.0f), holeLength(10.0f), wallHeight(0.3f), wallThick(0.15f), turfColor(0.15f, 0.55f, 0.15f), wallColor(0.25f, 0.18f, 0.08f), flagColor(1.0f, 0.0f, 0.0f), hasSand(false), sandOffset(0.0f), sandSize(1.5f, 1.5f), holeNumber(0), centerlineWidth(0.0f), vao(0), vbo(0), vertexCount(0), sandVao(0), sandVbo(0), sandVertexCount(0), flagVao(0), flagVbo(0), flagVertexCount(0)
 {
 }
 
-// Push one quad (two triangles) with given normal. Winding matches the
-// original: bl,br,tl / br,tr,tl.
+
+
 void GolfHole::pushQuad(std::vector<float> &buf,
                         glm::vec3 tl, glm::vec3 tr,
                         glm::vec3 bl, glm::vec3 br,
@@ -60,23 +60,23 @@ void GolfHole::pushQuad(std::vector<float> &buf,
     pushVert(buf, tl, normal);
 }
 
-// ---------------------------------------------------------------------------
-// buildRibbon
-//
-// Builds a CONTINUOUS fairway from a polyline of centre points (local XZ,
-// tee -> cup). Emits:
-//   - one floor quad per facet (no internal cross-walls -> seamless surface)
-//   - a continuous LEFT wall and RIGHT wall (mitred at interior joints so the
-//     rail keeps constant width and the seams meet cleanly)
-//   - end-cap walls only at the tee end and cup end
-//   - accurate per-facet AABBs for both side walls + caps into wallBoxes
-//
-// This is the single geometry path: straight, L-shaped and curved holes all
-// become point lists fed through here, so no hole has internal ridges.
-//
-// "Left" is +90 degrees from the forward direction: for edge dir d=(dx,dz),
-// left normal = (-dz, dx).
-// ---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void GolfHole::buildRibbon(std::vector<float> &buf,
                            const std::vector<glm::vec2> &pts,
                            float width,
@@ -91,10 +91,10 @@ void GolfHole::buildRibbon(std::vector<float> &buf,
     const float wh = wallHeight;
     const glm::vec3 upN(0.0f, 1.0f, 0.0f);
 
-    // ---- per-vertex left/right offset points (mitred) ----
-    std::vector<glm::vec2> Lc(n), Rc(n); // inner edge of rail (the playable border)
-    std::vector<glm::vec2> mdir(n);      // unit miter direction (points "left")
-    std::vector<float> mfac(n);          // miter length factor
+    
+    std::vector<glm::vec2> Lc(n), Rc(n); 
+    std::vector<glm::vec2> mdir(n);      
+    std::vector<float> mfac(n);          
 
     for (int i = 0; i < n; ++i)
     {
@@ -117,8 +117,8 @@ void GolfHole::buildRibbon(std::vector<float> &buf,
             glm::vec2 n0(-d0.y, d0.x);
             glm::vec2 n1(-d1.y, d1.x);
             ml = norm2(n0 + n1);
-            float dot = ml.x * n0.x + ml.y * n0.y;              // = cos(theta/2)
-            factor = (fabsf(dot) > 0.2f) ? (1.0f / dot) : 5.0f; // clamp spikes
+            float dot = ml.x * n0.x + ml.y * n0.y;              
+            factor = (fabsf(dot) > 0.2f) ? (1.0f / dot) : 5.0f; 
         }
         mdir[i] = ml;
         mfac[i] = factor;
@@ -131,20 +131,20 @@ void GolfHole::buildRibbon(std::vector<float> &buf,
         AABB box;
         box.min = glm::min(a, b);
         box.max = glm::max(a, b);
-        // ensure non-degenerate height
+        
         box.min.y = 0.0f;
         box.max.y = wh;
         wallBoxes.push_back(box);
     };
 
-    // ---- floor + side walls, facet by facet ----
+    
     for (int i = 0; i + 1 < n; ++i)
     {
         glm::vec2 l0 = Lc[i], l1 = Lc[i + 1];
         glm::vec2 r0 = Rc[i], r1 = Rc[i + 1];
 
-        // FLOOR (one quad spanning the facet, y=0). Normal up.
-        // tl=l1, tr=r1, bl=l0, br=r0  -> keeps original CCW winding.
+        
+        
         pushQuad(buf,
                  glm::vec3(l1.x, 0.0f, l1.y),
                  glm::vec3(r1.x, 0.0f, r1.y),
@@ -152,33 +152,33 @@ void GolfHole::buildRibbon(std::vector<float> &buf,
                  glm::vec3(r0.x, 0.0f, r0.y),
                  upN);
 
-        // outward wall offset along the miter direction
+        
         glm::vec2 lo0 = l0 + mdir[i] * wt;
         glm::vec2 lo1 = l1 + mdir[i + 1] * wt;
         glm::vec2 ro0 = r0 - mdir[i] * wt;
         glm::vec2 ro1 = r1 - mdir[i + 1] * wt;
 
-        // face normals (approximate, per facet)
+        
         glm::vec2 fdir = norm2(pts[i + 1] - pts[i]);
-        glm::vec3 leftN(-fdir.y, 0.0f, fdir.x);  // points left/out
-        glm::vec3 rightN(fdir.y, 0.0f, -fdir.x); // points right/out
+        glm::vec3 leftN(-fdir.y, 0.0f, fdir.x);  
+        glm::vec3 rightN(fdir.y, 0.0f, -fdir.x); 
 
-        // ---- LEFT WALL ----
-        // top
+        
+        
         pushQuad(buf,
                  glm::vec3(lo1.x, wh, lo1.y),
                  glm::vec3(l1.x, wh, l1.y),
                  glm::vec3(lo0.x, wh, lo0.y),
                  glm::vec3(l0.x, wh, l0.y),
                  upN);
-        // inner face (faces the fairway / right)
+        
         pushQuad(buf,
                  glm::vec3(l1.x, wh, l1.y),
                  glm::vec3(l0.x, wh, l0.y),
                  glm::vec3(l1.x, 0.0f, l1.y),
                  glm::vec3(l0.x, 0.0f, l0.y),
                  -leftN);
-        // outer face
+        
         pushQuad(buf,
                  glm::vec3(lo0.x, wh, lo0.y),
                  glm::vec3(lo1.x, wh, lo1.y),
@@ -187,21 +187,21 @@ void GolfHole::buildRibbon(std::vector<float> &buf,
                  leftN);
         addBox(glm::vec3(lo0.x, 0.0f, lo0.y), glm::vec3(l1.x, wh, l1.y));
 
-        // ---- RIGHT WALL ----
+        
         pushQuad(buf,
                  glm::vec3(r1.x, wh, r1.y),
                  glm::vec3(ro1.x, wh, ro1.y),
                  glm::vec3(r0.x, wh, r0.y),
                  glm::vec3(ro0.x, wh, ro0.y),
                  upN);
-        // inner face (faces fairway / left)
+        
         pushQuad(buf,
                  glm::vec3(r0.x, wh, r0.y),
                  glm::vec3(r1.x, wh, r1.y),
                  glm::vec3(r0.x, 0.0f, r0.y),
                  glm::vec3(r1.x, 0.0f, r1.y),
                  -rightN);
-        // outer face
+        
         pushQuad(buf,
                  glm::vec3(ro1.x, wh, ro1.y),
                  glm::vec3(ro0.x, wh, ro0.y),
@@ -211,20 +211,20 @@ void GolfHole::buildRibbon(std::vector<float> &buf,
         addBox(glm::vec3(ro0.x, 0.0f, ro0.y), glm::vec3(r1.x, wh, r1.y));
     }
 
-    // ---- END CAPS ----
+    
     auto buildCap = [&](glm::vec2 lc, glm::vec2 rc, glm::vec2 outDir)
     {
         glm::vec2 lo = lc + outDir * wt;
         glm::vec2 ro = rc + outDir * wt;
         glm::vec3 capN(outDir.x, 0.0f, outDir.y);
-        // top
+        
         pushQuad(buf,
                  glm::vec3(lo.x, wh, lo.y),
                  glm::vec3(ro.x, wh, ro.y),
                  glm::vec3(lc.x, wh, lc.y),
                  glm::vec3(rc.x, wh, rc.y),
                  upN);
-        // outer face
+        
         pushQuad(buf,
                  glm::vec3(lo.x, wh, lo.y),
                  glm::vec3(ro.x, wh, ro.y),
@@ -236,19 +236,19 @@ void GolfHole::buildRibbon(std::vector<float> &buf,
 
     if (capStart)
     {
-        glm::vec2 outDir = -norm2(pts[1] - pts[0]); // points back from tee
+        glm::vec2 outDir = -norm2(pts[1] - pts[0]); 
         buildCap(Lc[0], Rc[0], outDir);
     }
     if (capEnd)
     {
-        glm::vec2 outDir = norm2(pts[n - 1] - pts[n - 2]); // points past cup
+        glm::vec2 outDir = norm2(pts[n - 1] - pts[n - 2]); 
         buildCap(Lc[n - 1], Rc[n - 1], outDir);
     }
 }
 
-// A straight rectangle expressed as a 2-point ribbon (tee +Z -> cup -Z),
-// rotated by rotDeg and offset to (cx,cz). Used for straight + L segments so
-// everything flows through buildRibbon.
+
+
+
 void GolfHole::buildSegment(std::vector<float> &buf,
                             float cx, float cz,
                             float w, float l, float rotDeg)
@@ -269,13 +269,13 @@ void GolfHole::build()
     bool curved = (centerline.size() >= 2);
     float ribW = (centerlineWidth > 0.0f) ? centerlineWidth : holeWidth;
 
-    // Cup location for the flag (last centerline point, or straight -Z end).
+    
     glm::vec2 cup = curved ? centerline.back()
                            : glm::vec2(0.0f, -(holeLength * 0.5f - 0.5f));
 
     std::vector<float> turfBuf;
 
-    // ==== MAIN FAIRWAY (one continuous ribbon) ====
+    
     if (curved)
     {
         buildRibbon(turfBuf, centerline, ribW, true, true);
@@ -285,7 +285,7 @@ void GolfHole::build()
         buildSegment(turfBuf, 0.0f, 0.0f, holeWidth, holeLength, 0.0f);
     }
 
-    // ==== EXTRA SEGMENTS (L-bends etc.) — each its own ribbon ====
+    
     for (const auto &seg : extraSegments)
     {
         buildSegment(turfBuf, seg.offsetX, seg.offsetZ,
@@ -308,7 +308,7 @@ void GolfHole::build()
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
-    // ==== SAND PATCH ====
+    
     if (hasSand)
     {
         std::vector<float> sandBuf;
@@ -341,7 +341,7 @@ void GolfHole::build()
         glBindVertexArray(0);
     }
 
-    // ==== FLAG (pole + triangle) at the cup ====
+    
     {
         float cupX = cup.x;
         float cupZ = cup.y;
@@ -386,7 +386,7 @@ void GolfHole::build()
         glBindVertexArray(0);
     }
 
-    // ==== Broad AABB ====
+    
     if (curved)
     {
         glm::vec2 lo(1e30f), hi(-1e30f);
@@ -408,9 +408,9 @@ void GolfHole::build()
     }
 }
 
-// ---------------------------------------------------------------------------
-// draw helpers
-// ---------------------------------------------------------------------------
+
+
+
 static void drawBuffer(GLuint vao, int count,
                        GLuint shader,
                        const glm::mat4 &model,
@@ -430,7 +430,7 @@ static void drawBuffer(GLuint vao, int count,
 
 void GolfHole::draw(const glm::mat4 &view,
                     const glm::mat4 &proj,
-                    const LightSet & /*lights*/)
+                    const LightSet & )
 {
     GLuint shader = ShaderManager::get("basic");
     glUseProgram(shader);

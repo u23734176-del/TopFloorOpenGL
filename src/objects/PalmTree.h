@@ -7,8 +7,8 @@ class PalmTree : public StaticMesh
 {
 public:
     PalmTree() : StaticMesh({
-                     // ---> PASTE YOUR PYTHON VECTOR DATA HERE <---
-                     // Baked from Palm_Tree.obj | Vertices: 1212
+                     
+                     
                          -0.0f, -1.070584f, -2.619786f, 0.0969f, 0.1525f, -0.9835f, 1.0f, 0.5f,
                          0.0f, 7.451486f, -1.298213f, 0.0969f, 0.1525f, -0.9835f, 1.0f, 1.0f,
                          0.253269f, 7.451486f, -1.273268f, 0.0969f, 0.1525f, -0.9835f, 0.96875f, 1.0f,
@@ -1223,7 +1223,7 @@ public:
                          -3.429836f, 10.073942f, -1.022764f, -0.2647f, 0.9608f, -0.0828f, 0.5f, 0.5f
                  })
     {
-        // Set default scale/color for the palm tree here
+        
         setScale(glm::vec3(1.5f));
         setColor(glm::vec3(0.3f, 0.6f, 0.2f));
     }

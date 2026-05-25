@@ -4,7 +4,7 @@
 
 static const float PI = 3.14159265358979f;
 
-// ── shaders — pos+colour only, no lighting uniform needed (baked in) ──────────
+
 static const char* VERT = R"(
 #version 330 core
 layout(location = 0) in vec3 aPos;
@@ -26,7 +26,7 @@ void main() {
 }
 )";
 
-// ── shadedColor helper (same as your prac) ────────────────────────────────────
+
 static void shadedColor(float nx, float ny, float nz,
                         float cr, float cg, float cb,
                         float& r,  float& g,  float& b)
@@ -42,7 +42,7 @@ static void shadedColor(float nx, float ny, float nz,
     r = cr*light; g = cg*light; b = cb*light;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 Drone::Drone()
     : position(0.0f, 5.0f, 0.0f)
@@ -67,7 +67,7 @@ Drone::~Drone()
 }
 void Drone::drawDepth(GLuint depthShaderProgram)
 {
-    // draw body only for shadow casting
+    
     glm::mat4 rollMat = glm::rotate(glm::mat4(1.0f), glm::radians(roll), front);
     glm::vec3 up      = glm::normalize(glm::vec3(rollMat * glm::vec4(worldUp, 0.0f)));
     glm::vec3 right   = glm::normalize(glm::cross(front, up));
@@ -87,33 +87,33 @@ void Drone::drawDepth(GLuint depthShaderProgram)
     glDrawArrays(GL_TRIANGLES, 0, bodyCount);
     glBindVertexArray(0);
 }
-// ── build — same pattern as your prac's main() setup block ───────────────────
+
 void Drone::build()
 {
     shaderProgram = loadDroneShaders();
 
-    // body: flattened sphere (dark grey)
+    
     auto bv = makeSphere(1.0f, 16, 16, 0.20f, 0.20f, 0.22f);
     bodyVAO   = uploadMesh(bv);
     bodyCount = (int)bv.size() / 6;
 
-    // arm: cylinder (slightly lighter grey)
+    
     auto av = makeCylinder(1.0f, 1.0f, 12, 0.28f, 0.28f, 0.30f);
     armVAO   = uploadMesh(av);
     armCount = (int)av.size() / 6;
 
-    // rotor disc (silver)
+    
     auto rv = makeDisc(1.0f, 20, 0.55f, 0.55f, 0.60f);
     rotorVAO   = uploadMesh(rv);
     rotorCount = (int)rv.size() / 6;
 
-    // guard ring / torus (dark)
+    
     auto gv = makeTorus(1.0f, 0.06f, 28, 8, 0.25f, 0.25f, 0.27f);
     guardVAO   = uploadMesh(gv);
     guardCount = (int)gv.size() / 6;
 }
 
-// ── input — drone owns movement, same key layout as your prac ─────────────────
+
 void Drone::processInput(GLFWwindow* window, float deltaTime)
 {
     float vel      = speed * deltaTime;
@@ -164,26 +164,26 @@ glm::vec3 Drone::getPosition() const { return position; }
 glm::vec3 Drone::getFront()    const { return front;    }
 float     Drone::getRoll()     const { return roll;     }
 
-// ── draw ──────────────────────────────────────────────────────────────────────
+
 void Drone::draw(const glm::mat4& view, const glm::mat4& proj, const LightSet& lights)
 {
-    // drone orientation axes
+    
     glm::mat4 rollMat = glm::rotate(glm::mat4(1.0f), glm::radians(roll), front);
     glm::vec3 up      = glm::normalize(glm::vec3(rollMat * glm::vec4(worldUp, 0.0f)));
     glm::vec3 right   = glm::normalize(glm::cross(front, up));
 
-    // base orientation matrix at drone position
+    
     glm::mat4 base(1.0f);
     base[0] = glm::vec4(right,   0.0f);
     base[1] = glm::vec4(up,      0.0f);
     base[2] = glm::vec4(-front,  0.0f);
     base[3] = glm::vec4(position, 1.0f);
 
-    // ── body: flattened sphere ────────────────────────────────────────────
+    
     glm::mat4 bodyModel = base * glm::scale(glm::mat4(1.0f), glm::vec3(0.35f, 0.14f, 0.35f));
     drawPart(bodyVAO, bodyCount, bodyModel, view, proj);
 
-    // ── 4 arms at 45/135/225/315 degrees ─────────────────────────────────
+    
     float angles[4] = { 45.0f, 135.0f, 225.0f, 315.0f };
     float armLen = 0.55f;
 
@@ -193,7 +193,7 @@ void Drone::draw(const glm::mat4& view, const glm::mat4& proj, const LightSet& l
         glm::vec3 localDir(cos(rad), 0.0f, sin(rad));
         glm::vec3 worldDir = right * localDir.x + (-front) * localDir.z;
 
-        // arm: cylinder stretched along worldDir
+        
         glm::vec3 armCenter = position + worldDir * (armLen * 0.5f);
         glm::vec3 cylDefault(0.0f, 1.0f, 0.0f);
         glm::vec3 axis = glm::cross(cylDefault, worldDir);
@@ -205,16 +205,16 @@ void Drone::draw(const glm::mat4& view, const glm::mat4& proj, const LightSet& l
         armModel = glm::scale(armModel, glm::vec3(0.035f, armLen * 0.5f, 0.035f));
         drawPart(armVAO, armCount, armModel, view, proj);
 
-        // rotor tip position
+        
         glm::vec3 rotorPos = position + worldDir * armLen + up * 0.06f;
 
-        // spinning disc
+        
         glm::mat4 rotorModel = glm::translate(glm::mat4(1.0f), rotorPos);
         rotorModel = glm::rotate(rotorModel, glm::radians(rotorAngle + i * 90.0f), up);
         rotorModel = glm::scale(rotorModel, glm::vec3(0.22f, 0.01f, 0.22f));
         drawPart(rotorVAO, rotorCount, rotorModel, view, proj);
 
-        // guard ring (torus)
+        
         glm::mat4 guardModel = glm::translate(glm::mat4(1.0f), rotorPos);
         glm::vec3 torusUp(0.0f, 1.0f, 0.0f);
         glm::vec3 gAxis = glm::cross(torusUp, up);
@@ -239,7 +239,7 @@ void Drone::drawPart(GLuint vao, int count,
     glBindVertexArray(0);
 }
 
-// ── geometry — same style as your prac helpers ────────────────────────────────
+
 std::vector<float> Drone::makeSphere(float r, int stacks, int slices,
                                      float cr, float cg, float cb)
 {
@@ -283,14 +283,14 @@ std::vector<float> Drone::makeCylinder(float r, float h, int slices,
         float x1=cos(a1)*r, z1=sin(a1)*r;
         float nxm=(cos(a0)+cos(a1))*0.5f, nzm=(sin(a0)+sin(a1))*0.5f;
         float ro, go, bo;
-        // side
+        
         shadedColor(nxm, 0, nzm, cr, cg, cb, ro, go, bo);
         v.insert(v.end(), {x0,-halfH,z0,ro,go,bo, x1,-halfH,z1,ro,go,bo, x1,halfH,z1,ro,go,bo,
                            x0,-halfH,z0,ro,go,bo, x1, halfH,z1,ro,go,bo, x0,halfH,z0,ro,go,bo});
-        // top cap
+        
         shadedColor(0,1,0, cr,cg,cb, ro,go,bo);
         v.insert(v.end(), {0,halfH,0,ro,go,bo, x0,halfH,z0,ro,go,bo, x1,halfH,z1,ro,go,bo});
-        // bottom cap
+        
         shadedColor(0,-1,0, cr,cg,cb, ro,go,bo);
         v.insert(v.end(), {0,-halfH,0,ro,go,bo, x1,-halfH,z1,ro,go,bo, x0,-halfH,z0,ro,go,bo});
     }
@@ -361,7 +361,7 @@ std::vector<float> Drone::makeTorus(float mainR, float tubeR,
     return v;
 }
 
-// ── uploadMesh — identical to your prac ──────────────────────────────────────
+
 GLuint Drone::uploadMesh(const std::vector<float>& verts)
 {
     GLuint vao, vbo;
@@ -370,10 +370,10 @@ GLuint Drone::uploadMesh(const std::vector<float>& verts)
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(float), verts.data(), GL_STATIC_DRAW);
-    // attrib 0: position
+    
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    // attrib 1: colour (baked)
+    
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);

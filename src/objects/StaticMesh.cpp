@@ -1,10 +1,10 @@
 #include "StaticMesh.h"
 #include "../core/ShaderManager.h"
 #include "../core/ResourceManager.h"
-// StaticMesh.cpp — only draw() and drawDepth() changed.
-// Replace these two functions in your existing StaticMesh.cpp.
 
-// ---- ADD this include at the top of StaticMesh.cpp ----
+
+
+
 #include <glm/gtc/type_ptr.hpp>
 
 StaticMesh::StaticMesh(const std::vector<float> &geometry)
@@ -17,10 +17,10 @@ void StaticMesh::build()
     if (vertexData.empty())
         return;
 
-    // 8 floats per vertex: [x, y, z, nx, ny, nz, u, v]
+    
     vertexCount = (int)(vertexData.size() / 8);
 
-    // --- NEW: Extract the glm::vec3 positions to satisfy the AABB function ---
+    
     std::vector<glm::vec3> positions;
     positions.reserve(vertexCount);
     for (size_t i = 0; i < vertexData.size(); i += 8)
@@ -28,7 +28,7 @@ void StaticMesh::build()
         positions.push_back(glm::vec3(vertexData[i], vertexData[i + 1], vertexData[i + 2]));
     }
     initAABBFromVertices(positions);
-    // -------------------------------------------------------------------------
+    
 
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
@@ -37,26 +37,26 @@ void StaticMesh::build()
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
 
-    // Attribute 0: Position (x, y, z)
+    
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
-    // Attribute 1: Normal (nx, ny, nz)
+    
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // Attribute 2: TexCoords (u, v)
+    
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    // Clear the vector from RAM since it's now living on the GPU VRAM
+    
     vertexData.clear();
 }
 
-void StaticMesh::draw(const glm::mat4 &view, const glm::mat4 &proj, const LightSet & /*lights*/)
+void StaticMesh::draw(const glm::mat4 &view, const glm::mat4 &proj, const LightSet & )
 {
     GLuint shader = ShaderManager::get("basic");
     glUseProgram(shader);

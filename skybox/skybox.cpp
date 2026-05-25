@@ -6,46 +6,13 @@
 #include <iostream>
 #include <vector>
  
-// stb_image symbols are compiled in stb_image.cpp.
+
 extern "C" {
     extern unsigned char* stbi_load(const char* filename, int* x, int* y,
                                     int* comp, int req_comp);
     extern void           stbi_image_free(void* retval_from_stbi_load);
     extern void           stbi_set_flip_vertically_on_load(int flag_true_if_should_flip);
 }
- 
-// static std::vector<unsigned char> resizeToSquareRgba(const unsigned char* source,
-//                                                      int width,
-//                                                      int height,
-//                                                      int size)
-// {
-//     std::vector<unsigned char> result(size * size * 4);
-
-//     for (int y = 0; y < size; ++y)
-//     {
-//         // Nearest neighbor Y coordinate
-//         int srcY = (y * height) / size;
-//         srcY = std::max(0, std::min(srcY, height - 1));
-
-//         for (int x = 0; x < size; ++x)
-//         {
-//             // Nearest neighbor X coordinate
-//             int srcX = (x * width) / size;
-//             srcX = std::max(0, std::min(srcX, width - 1));
-
-//             int destIndex = (y * size + x) * 4;
-//             int srcIndex = (srcY * width + srcX) * 4;
-
-//             // Copy RGBA channels directly—no fractional blending!
-//             result[destIndex + 0] = source[srcIndex + 0];
-//             result[destIndex + 1] = source[srcIndex + 1];
-//             result[destIndex + 2] = source[srcIndex + 2];
-//             result[destIndex + 3] = source[srcIndex + 3];
-//         }
-//     }
-
-//     return result;
-// }
 
 static std::vector<unsigned char> stretchToSquareRgba(const unsigned char* source,
                                                       int width, int height,
@@ -83,7 +50,7 @@ static std::vector<unsigned char> stretchToSquareRgba(const unsigned char* sourc
     }
     return result;
 }
-// Inward-facing cube, 36 vertices, position only (location 0).
+
 static const float skyboxVertices[] = {
     -1.0f,  1.0f, -1.0f,
     -1.0f, -1.0f, -1.0f,
@@ -230,7 +197,7 @@ GLuint Skybox::loadCubemap(const std::vector<std::string>& faces)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    // Clamp to edge to prevent border sampling
+    
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -243,15 +210,15 @@ GLuint Skybox::loadCubemap(const std::vector<std::string>& faces)
         if (data)
         {
             stbi_set_flip_vertically_on_load(false);
-            // Crop and scale to exactly 512x512
+            
             std::vector<unsigned char> squareFace = 
                 stretchToSquareRgba(data, width, height, cubeFaceSize);
 
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
                          0,
                          GL_RGBA,
-                         cubeFaceSize, // GUARANTEED 512
-                         cubeFaceSize, // GUARANTEED 512
+                         cubeFaceSize, 
+                         cubeFaceSize, 
                          0,
                          GL_RGBA,
                          GL_UNSIGNED_BYTE,
@@ -267,9 +234,9 @@ GLuint Skybox::loadCubemap(const std::vector<std::string>& faces)
         }
     }
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-    // REMOVED: glGenerateMipmap
-    // REMOVED: GL_TEXTURE_BASE_LEVEL / MAX_LEVEL
-    // REMOVED: Anisotropic filtering block
+    
+    
+    
 
     return textureID;
 }

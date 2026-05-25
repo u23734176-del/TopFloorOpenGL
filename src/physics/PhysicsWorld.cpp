@@ -1,12 +1,12 @@
 #include "PhysicsWorld.h"
 #include <cmath>
 
-// ---------------------------------------------------------------------------
-// PhysicsWorld.cpp  (Slice E - Karabo)
-// ---------------------------------------------------------------------------
+
+
+
 
 PhysicsWorld::PhysicsWorld()
-    : ballObject(nullptr), ballPhysics(nullptr), groundLevel(0.0f), hasGround(false), restitution(0.6f), ballInCup(false), cupCaptureSpeed(2.5f) // ball must be slower than this to drop, else lips out
+    : ballObject(nullptr), ballPhysics(nullptr), groundLevel(0.0f), hasGround(false), restitution(0.6f), ballInCup(false), cupCaptureSpeed(2.5f) 
 {
 }
 
@@ -16,7 +16,7 @@ void PhysicsWorld::setBall(SceneObject *obj, BallPhysics *physics)
     ballPhysics = physics;
     if (ballObject && ballPhysics)
     {
-        // Seed physics position from wherever the object was placed.
+        
         ballPhysics->setPosition(ballObject->getModelMatrix()[3]);
     }
 }
@@ -48,16 +48,16 @@ BoundingSphere PhysicsWorld::ballSphere() const
     return s;
 }
 
-// Pick the box face whose outward normal best matches the direction from the
-// box centre to the contact point. Good enough for axis-aligned mini-golf
-// walls and far cheaper than full manifold generation.
+
+
+
 glm::vec3 PhysicsWorld::faceNormalFor(const AABB &box, const glm::vec3 &point) const
 {
     glm::vec3 centre = (box.min + box.max) * 0.5f;
     glm::vec3 d = point - centre;
     glm::vec3 half = (box.max - box.min) * 0.5f;
 
-    // Normalise each axis distance by the box half-extent, largest wins.
+    
     float nx = (half.x > 0.0f) ? fabsf(d.x) / half.x : 0.0f;
     float ny = (half.y > 0.0f) ? fabsf(d.y) / half.y : 0.0f;
     float nz = (half.z > 0.0f) ? fabsf(d.z) / half.z : 0.0f;
@@ -69,22 +69,22 @@ glm::vec3 PhysicsWorld::faceNormalFor(const AABB &box, const glm::vec3 &point) c
     return glm::vec3(0.0f, 0.0f, (d.z < 0.0f) ? -1.0f : 1.0f);
 }
 
-// Which surface is the ball currently rolling on? If it sits on top of a
-// tagged collider, use that collider's friction; otherwise default to TURF.
+
+
 Surface PhysicsWorld::surfaceUnderBall() const
 {
     if (!ballPhysics)
         return Surface::TURF;
 
     BoundingSphere s = ballSphere();
-    // Probe a thin sphere just below the ball.
+    
     BoundingSphere probe = s;
     probe.centre.y -= s.radius * 0.5f;
 
     for (const Collider &c : colliders)
     {
         if (c.surface == Surface::SOLID)
-            continue; // walls aren't "floor"
+            continue; 
         AABB box = c.obj->getWorldAABB();
         if (intersects(probe, box))
         {
@@ -118,7 +118,7 @@ void PhysicsWorld::resolveCollisions(float dt)
     BoundingSphere s = ballSphere();
     bool groundedThisStep = false;
 
-    // --- ground plane -------------------------------------------------------
+    
     if (hasGround)
     {
         float floorY = groundLevel + s.radius;
@@ -130,13 +130,13 @@ void PhysicsWorld::resolveCollisions(float dt)
 
             glm::vec3 v = ballPhysics->getVelocity();
             if (v.y < 0.0f)
-                v.y = 0.0f; // cancel downward motion
+                v.y = 0.0f; 
             ballPhysics->setVelocity(v);
             groundedThisStep = true;
         }
     }
 
-    // --- static colliders ---------------------------------------------------
+    
     for (const Collider &c : colliders)
     {
         std::vector<AABB> boxes = c.obj->getCollisionAABBs();
@@ -147,7 +147,7 @@ void PhysicsWorld::resolveCollisions(float dt)
             if (!intersects(s, box))
                 continue;
 
-            // ---- CUP CAPTURE ---------------------------------------------------
+            
             if (c.surface == Surface::CUP)
             {
                 glm::vec3 v = ballPhysics->getVelocity();
@@ -166,7 +166,7 @@ void PhysicsWorld::resolveCollisions(float dt)
 
             glm::vec3 normal = faceNormalFor(box, s.centre);
 
-            // Top-face contact = standing on it (acts like ground). Side faces = wall bounce.
+            
             if (normal.y > 0.5f)
             {
                 glm::vec3 p = ballPhysics->getPosition();
@@ -180,7 +180,7 @@ void PhysicsWorld::resolveCollisions(float dt)
             }
             else
             {
-                // Depenetrate and reflect
+                
                 glm::vec3 closest;
                 closest.x = fmaxf(box.min.x, fminf(s.centre.x, box.max.x));
                 closest.y = fmaxf(box.min.y, fminf(s.centre.y, box.max.y));
@@ -201,7 +201,7 @@ void PhysicsWorld::resolveCollisions(float dt)
 
     ballPhysics->setGrounded(groundedThisStep);
 
-    // Apply the surface the ball is resting on (friction for next integrate).
+    
     if (groundedThisStep)
     {
         ballPhysics->setFriction(frictionFor(surfaceUnderBall()));
@@ -213,13 +213,13 @@ void PhysicsWorld::update(float dt)
     if (!ballObject || !ballPhysics)
         return;
 
-    // Guard against huge frames (e.g. after a stall) blowing up the sim.
+    
     if (dt > 0.05f)
         dt = 0.05f;
 
     ballPhysics->integrate(dt);
     resolveCollisions(dt);
 
-    // Write simulated position back to the drawable object.
+    
     ballObject->setPosition(ballPhysics->getPosition());
 }

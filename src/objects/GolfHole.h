@@ -6,67 +6,40 @@
 
 #include <vector>
 
-// -----------------------------------------------------------------------
-// GolfHole
-//
-// A self-contained hole built from flat quads (floor + border walls) and
-// a flag (thin pole + coloured triangle).
-//
-// Coordinate convention (local before setPosition):
-//   X = width direction
-//   Y = up
-//   Z = length direction (tee at +Z end, cup at -Z end)
-//
-// The hole is centred on the world position you give it.
-//
-// Three ways to shape a hole (combine freely):
-//   1. holeWidth/holeLength            -> a single straight rectangle.
-//   2. extraSegments                   -> bolt rectangles on (L-bends, etc.)
-//   3. centerline                      -> sweep a ribbon of width
-//                                         centerlineWidth along a polyline
-//                                         of local XZ points, giving curved
-//                                         / S-shaped / kidney fairways.
-//
-// When centerline has >= 2 points, the main straight rectangle is NOT built
-// (the curve replaces it); extraSegments are still added on top, and the flag
-// is placed at the last centerline point (the cup).
-// -----------------------------------------------------------------------
-
-// One rectangular segment of a hole (used for multi-segment layouts)
 struct HoleSegment
 {
-    float offsetX; // centre offset from hole origin in X
-    float offsetZ; // centre offset from hole origin in Z
+    float offsetX; 
+    float offsetZ; 
     float width;
     float length;
-    float rotY; // rotation around Y (degrees) to allow L/curve shapes
+    float rotY; 
 };
 
 class GolfHole : public SceneObject
 {
 public:
-    // ---- build parameters ----
-    float holeWidth;      // fairway width  (X)
-    float holeLength;     // fairway length (Z)
-    float wallHeight;     // height of border walls
-    float wallThick;      // thickness of border walls
-    glm::vec3 turfColor;  // green
-    glm::vec3 wallColor;  // border colour
-    glm::vec3 flagColor;  // flag triangle colour
-    bool hasSand;         // draw a sand patch?
-    glm::vec3 sandOffset; // where in the hole (local XZ)
-    glm::vec2 sandSize;   // width, length of sand patch
-    int holeNumber;       // for identification only
+    
+    float holeWidth;      
+    float holeLength;     
+    float wallHeight;     
+    float wallThick;      
+    glm::vec3 turfColor;  
+    glm::vec3 wallColor;  
+    glm::vec3 flagColor;  
+    bool hasSand;         
+    glm::vec3 sandOffset; 
+    glm::vec2 sandSize;   
+    int holeNumber;       
 
-    // Extra rectangular segments (for L-bends etc.)
+    
     std::vector<HoleSegment> extraSegments;
 
-    // ---- curved fairway (optional) ----
-    // Local XZ control points, ordered tee -> cup. When >= 2 points, the
-    // hole is built by sweeping a ribbon of width centerlineWidth along these
-    // points instead of the single straight rectangle.
+    
+    
+    
+    
     std::vector<glm::vec2> centerline;
-    float centerlineWidth; // 0 -> falls back to holeWidth
+    float centerlineWidth; 
 
     GolfHole();
 
@@ -79,36 +52,36 @@ public:
     std::vector<AABB> getCollisionAABBs() const override;
 
 private:
-    // ---- GPU data ----
-    // We pack everything into one VAO/VBO for simplicity
+    
+    
     GLuint vao;
     GLuint vbo;
     int vertexCount;
 
-    // sand patch
+    
     GLuint sandVao;
     GLuint sandVbo;
     int sandVertexCount;
 
-    // flag pole + triangle
+    
     GLuint flagVao;
     GLuint flagVbo;
     int flagVertexCount;
 
-    // ---- helpers ----
+    
     void pushQuad(std::vector<float> &buf,
                   glm::vec3 tl, glm::vec3 tr,
                   glm::vec3 bl, glm::vec3 br,
                   glm::vec3 normal);
 
-    // Straight rectangle as a 2-point ribbon (used for straight + L segments).
+    
     void buildSegment(std::vector<float> &turfBuf,
                       float cx, float cz,
                       float w, float l, float rotY);
 
-    // Build a continuous fairway from a polyline of centre points (local XZ,
-    // tee -> cup): seamless floor, mitred continuous side walls, optional end
-    // caps. This is the single geometry path for all hole shapes.
+    
+    
+    
     void buildRibbon(std::vector<float> &turfBuf,
                      const std::vector<glm::vec2> &pts,
                      float width,

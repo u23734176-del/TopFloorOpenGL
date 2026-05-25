@@ -4,8 +4,8 @@
 #include "../core/SceneObject.h"
 #include "../core/shader.hpp"
 
-// Cone: apex at y=+1, base circle at y=-1, radius 1 in local space.
-// Scale as needed.
+
+
 class Cone : public SceneObject
 {
 private:

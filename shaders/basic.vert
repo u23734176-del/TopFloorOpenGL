@@ -15,10 +15,10 @@ out vec4 FragPosLightSpace;
 
 void main()
 {
-    // Fragment position in world space
+    
     FragPos = vec3(model * vec4(position, 1.0));
     
-    // Transform normal to world space (account for non-uniform scaling)
+    
     Normal = normalize(mat3(transpose(inverse(model))) * normal);
     FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
     

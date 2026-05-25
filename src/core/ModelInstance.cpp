@@ -1,5 +1,5 @@
 #include "ModelInstance.h"
-#include "../core/ShaderManager.h"
+#include "ShaderManager.h"
 #include <glm/gtc/type_ptr.hpp>
 
 ModelInstance::ModelInstance(AssimpModel *sharedMesh)
@@ -9,8 +9,8 @@ ModelInstance::ModelInstance(AssimpModel *sharedMesh)
 
 void ModelInstance::build()
 {
-    // Geometry already uploaded by AssimpModel::build() via ResourceManager.
-    // Copy the shared mesh's local AABB so collision/culling works correctly.
+    
+    
     if (mesh)
     {
         AABB shared = mesh->getLocalAABB();
@@ -20,7 +20,7 @@ void ModelInstance::build()
 
 void ModelInstance::draw(const glm::mat4 &view,
                          const glm::mat4 &proj,
-                         const LightSet & /*lights*/)
+                         const LightSet & )
 {
     if (!mesh)
         return;
@@ -28,14 +28,14 @@ void ModelInstance::draw(const glm::mat4 &view,
     GLuint shader = ShaderManager::get("basic");
     glUseProgram(shader);
 
-    // Upload THIS instance's model matrix — not the shared mesh's transform
+    
     glm::mat4 model = getModelMatrix();
     ShaderManager::setMat4(shader, "model", glm::value_ptr(model));
     ShaderManager::setMat4(shader, "view", glm::value_ptr(view));
     ShaderManager::setMat4(shader, "projection", glm::value_ptr(proj));
     ShaderManager::setInt(shader, "useTexture", 0);
 
-    // Draw each submesh with its material colour
+    
     for (const SubMesh &sub : mesh->getSubMeshes())
     {
         ShaderManager::setVec3(shader, "objectColor",

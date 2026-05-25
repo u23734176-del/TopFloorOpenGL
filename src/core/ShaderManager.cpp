@@ -3,13 +3,13 @@
 #include <sstream>
 #include <iostream>
 
-// Static member definitions
+
 std::unordered_map<std::string, GLuint> ShaderManager::programs;
 std::unordered_map<std::string, GLint> ShaderManager::locationCache;
 
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
+
+
+
 static GLuint compileShader(GLenum type, const std::string &path)
 {
     std::ifstream file(path);
@@ -41,9 +41,9 @@ static GLuint compileShader(GLenum type, const std::string &path)
     return shader;
 }
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
+
+
+
 void ShaderManager::load(const std::string &name,
                          const std::string &vertPath,
                          const std::string &fragPath)
@@ -70,7 +70,7 @@ void ShaderManager::load(const std::string &name,
     }
     else
     {
-        // If we're replacing an existing program, flush its cache entries
+        
         auto it = programs.find(name);
         if (it != programs.end())
             invalidateCache(it->second);
@@ -90,8 +90,8 @@ GLuint ShaderManager::get(const std::string &name)
 
 std::string ShaderManager::cacheKey(GLuint program, const std::string &uniformName)
 {
-    // Simple string key — built once per unique (program, name) pair.
-    // The cost of this lookup is far lower than a driver round-trip.
+    
+    
     return std::to_string(program) + ":" + uniformName;
 }
 
@@ -102,7 +102,7 @@ GLint ShaderManager::getUniformLocation(GLuint program, const std::string &unifo
     if (it != locationCache.end())
         return it->second;
 
-    // Cache miss — ask the driver once, then store
+    
     GLint loc = glGetUniformLocation(program, uniformName.c_str());
     locationCache[key] = loc;
     return loc;
@@ -110,7 +110,7 @@ GLint ShaderManager::getUniformLocation(GLuint program, const std::string &unifo
 
 void ShaderManager::invalidateCache(GLuint program)
 {
-    // Erase all entries whose key starts with this program's ID prefix
+    
     const std::string prefix = std::to_string(program) + ":";
     for (auto it = locationCache.begin(); it != locationCache.end();)
     {
@@ -121,9 +121,9 @@ void ShaderManager::invalidateCache(GLuint program)
     }
 }
 
-// ---------------------------------------------------------------------------
-// Convenience setters — these are what draw() functions should call
-// ---------------------------------------------------------------------------
+
+
+
 void ShaderManager::setMat4(GLuint prog, const std::string &name, const float *value)
 {
     GLint loc = getUniformLocation(prog, name);

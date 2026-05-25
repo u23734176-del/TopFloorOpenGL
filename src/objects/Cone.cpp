@@ -18,13 +18,9 @@ void Cone::build()
     const float TWO_PI = 2.0f * PI;
 
     glm::vec3 apex(0.0f, 1.0f, 0.0f);
-
-    // ---- SIDE ----
-    // Side normal: perpendicular to the slant surface
-    // For a unit cone (half-angle = 45 deg), the outward normal has
-    // y = sin(45) = ~0.707 and the radial part = cos(45).
-    const float slopeY = 0.70710678f;  // sin(45)
-    const float slopeR = 0.70710678f;  // cos(45)
+    
+    const float slopeY = 0.70710678f;  
+    const float slopeR = 0.70710678f;  
 
     for (int i = 0; i < segments; ++i)
     {
@@ -35,7 +31,7 @@ void Cone::build()
         glm::vec3 base0(cosf(a0), -1.0f, sinf(a0));
         glm::vec3 base1(cosf(a1), -1.0f, sinf(a1));
 
-        // Approximate face normal with mid-segment direction
+        
         glm::vec3 n0(slopeR * cosf(a0),   slopeY, slopeR * sinf(a0));
         glm::vec3 n1(slopeR * cosf(a1),   slopeY, slopeR * sinf(a1));
         glm::vec3 nApex(slopeR * cosf(aMid), slopeY, slopeR * sinf(aMid));
@@ -50,7 +46,7 @@ void Cone::build()
         push(base1, n1);
     }
 
-    // ---- BASE CAP (y = -1, normal = -Y) ----
+    
     {
         glm::vec3 centre(0.0f, -1.0f, 0.0f);
         glm::vec3 norm(0.0f, -1.0f, 0.0f);
@@ -95,7 +91,7 @@ void Cone::build()
 
 void Cone::draw(const glm::mat4& view,
                 const glm::mat4& proj,
-                const LightSet&  /*lights*/)
+                const LightSet&  )
 {
     GLuint shader = ShaderManager::get("basic");
     glUseProgram(shader);

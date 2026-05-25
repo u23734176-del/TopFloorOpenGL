@@ -12,13 +12,13 @@ SceneObject::SceneObject()
     , hasTexture(false)
     , texture(nullptr)
 {
-    // Default to unit cube AABB
+    
     aabb.min = glm::vec3(-0.5f);
     aabb.max = glm::vec3(0.5f);
 }
 
 SceneObject::~SceneObject() {
-    // Release texture if we have one
+    
     if (texture) {
         releaseTexture();
     }
@@ -55,19 +55,19 @@ glm::mat4 SceneObject::getModelMatrix() const {
 }
 
 bool SceneObject::loadTexture(const std::string& filePath) {
-    // Get ResourceManager instance
+    
     ResourceManager* rm = ResourceManager::getInstance();
     if (!rm) {
         std::cerr << "Error: ResourceManager not available" << std::endl;
         return false;
     }
     
-    // Release any existing texture first
+    
     if (texture) {
         releaseTexture();
     }
     
-    // Load or retrieve texture from cache
+    
     texture = rm->loadTexture(filePath);
     
     if (texture) {

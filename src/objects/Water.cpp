@@ -4,25 +4,13 @@
 #include <GLFW/glfw3.h>
 #include "../core/ShaderManager.h"
 
-// ---------------------------------------------------------------------------
-// Water.cpp  (Slice C - Karabo)
-//
-// Flat horizontal quad (two triangles) with an upward normal, drawn with the
-// "water" shader so it can be alpha-blended. The transparency-correct draw
-// disables depth WRITES (but keeps depth TEST) so opaque geometry behind the
-// water shows through, then restores the depth mask.
-//
-// IMPORTANT (render order): water must be drawn AFTER all opaque objects. The
-// cleanest way with the current single-pass Scene is to keep this Water out of
-// scene.addObject() and call water.draw(view, proj, lights) explicitly right
-// after scene.drawAllObjects(...). See SLICE_E_INTEGRATION.md.
-// ---------------------------------------------------------------------------
+
 
 Water::Water()
     : vao(0), vbo(0), shader(0), vertexCount(0), sizeX(6.0f), sizeZ(6.0f), alpha(0.55f), shininess(128.0f)
 {
-    setColor(glm::vec3(0.1f, 0.3f, 0.5f)); // watery blue
-    // Flat plane AABB (thin in y) for any collision queries.
+    setColor(glm::vec3(0.1f, 0.3f, 0.5f)); 
+    
     initAABBFromPrimitive(glm::vec3(sizeX, 0.05f, sizeZ));
 }
 
@@ -38,12 +26,12 @@ void Water::setShininess(float s) { shininess = s; }
 
 void Water::build()
 {
-    // Dedicated water program (alpha-capable). main.cpp must register it:
-    //   ShaderManager::load("water", "shaders/water.vert", "shaders/water.frag");
+    
+    
     shader = ShaderManager::get("water");
 
-    // Two triangles forming a horizontal quad at local y = 0, normal +Y.
-    // Interleaved [pos.xyz, normal.xyz] to match the vertex layout (loc 0/1).
+    
+    
     float v[] = {
         -sizeX, 0.0f, -sizeZ, 0.0f, 1.0f, 0.0f,
         sizeX, 0.0f, -sizeZ, 0.0f, 1.0f, 0.0f,
@@ -72,11 +60,11 @@ void Water::draw(const glm::mat4 &view,
 {
     glUseProgram(shader);
 
-    // NOTE: main.cpp sets the lighting/shadow uniforms on "basic" each frame,
-    // NOT on "water". So water needs those uniforms set on ITS program too.
-    // The simplest integration is to call main's passLightingUniforms(shader,
-    // lights, cameraPos) for the water program as well (see integration note).
-    // Here we set only what this class owns: matrices, colour, alpha, shininess.
+    
+    
+    
+    
+    
 
     glm::mat4 model = getModelMatrix();
     glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, &model[0][0]);
@@ -86,10 +74,10 @@ void Water::draw(const glm::mat4 &view,
     glUniform1f(glGetUniformLocation(shader, "alpha"), alpha);
     glUniform1f(glGetUniformLocation(shader, "shininess"), shininess);
 
-    // Transparent draw: keep depth TEST (so geometry in front still occludes
-    // water) but disable depth WRITES (so opaque geometry behind shows through
-    // and multiple transparent frags blend). Blending is already enabled in
-    // main.cpp with (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA).
+    
+    
+    
+    
     GLboolean depthMaskWas;
     glGetBooleanv(GL_DEPTH_WRITEMASK, &depthMaskWas);
     glDepthMask(GL_FALSE);
@@ -98,13 +86,13 @@ void Water::draw(const glm::mat4 &view,
     glDrawArrays(GL_TRIANGLES, 0, vertexCount);
     glBindVertexArray(0);
 
-    glDepthMask(depthMaskWas); // restore whatever it was
+    glDepthMask(depthMaskWas); 
 }
 
 void Water::drawDepth(GLuint depthShaderProgram)
 {
-    // Water is transparent; it generally should NOT cast hard shadows. Skipping
-    // the depth pass keeps it from blacking out the green beneath it. If you do
-    // want it in the shadow map, set model and draw like other objects.
+    
+    
+    
     (void)depthShaderProgram;
 }

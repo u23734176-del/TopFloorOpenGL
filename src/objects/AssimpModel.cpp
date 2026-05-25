@@ -21,14 +21,9 @@ AssimpModel::~AssimpModel()
     }
 }
 
-// ---------------------------------------------------------------------------
-// build() — idempotent, safe to call multiple times
-// ---------------------------------------------------------------------------
 void AssimpModel::build()
 {
-    // CRITICAL FIX: Scene::build() calls build() on every SceneObject, which
-    // means every ModelInstance referencing this mesh would re-upload to VRAM.
-    // The 'built' guard prevents that.
+
     if (built)
         return;
     built = true;
@@ -52,7 +47,7 @@ void AssimpModel::build()
         std::vector<float> vertexData;
         vertexData.reserve(mesh->mNumFaces * 3 * 8);
 
-        // Extract diffuse color from material
+        
         glm::vec3 meshColor(0.5f, 0.5f, 0.5f);
         if (scene->mMaterials && mesh->mMaterialIndex < scene->mNumMaterials)
         {
@@ -132,20 +127,14 @@ void AssimpModel::build()
     }
 
     initAABBFromVertices(allPositions);
-}
-
-// ---------------------------------------------------------------------------
-// draw() — standalone path (used when AssimpModel is placed directly in scene,
-// e.g. the gazebo which has only one instance and no sharing needed)
-// ---------------------------------------------------------------------------
-void AssimpModel::draw(const glm::mat4 &view, const glm::mat4 &proj, const LightSet & /*lights*/)
+}void AssimpModel::draw(const glm::mat4 &view, const glm::mat4 &proj, const LightSet & )
 {
     GLuint shader = ShaderManager::get("basic");
     glUseProgram(shader);
 
     glm::mat4 model = getModelMatrix();
 
-    // FIX: set view/projection ONCE per draw call, not once per submesh
+    
     ShaderManager::setMat4(shader, "model", glm::value_ptr(model));
     ShaderManager::setMat4(shader, "view", glm::value_ptr(view));
     ShaderManager::setMat4(shader, "projection", glm::value_ptr(proj));
