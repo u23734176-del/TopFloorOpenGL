@@ -231,7 +231,7 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
-    ShaderManager::load("basic",        "shaders/basic.vert",        "shaders/basic.frag");
+    ShaderManager::load("basic",        "basic.vert",        "basic.frag");
     ShaderManager::load("shadow_depth", "shaders/shadow_depth.vert", "shaders/shadow_depth.frag");
     ShaderManager::load("water",        "shaders/water.vert",        "shaders/water.frag");
 

@@ -164,7 +164,7 @@ void DecorationType::build(DecorationKind kind)
 {
     if (built)
         return; 
-    shader = LoadShaders("shaders/basic.vert", "shaders/basic.frag");
+    shader = LoadShaders("basic.vert", "basic.frag");
 
     std::vector<float> data;
     switch (kind)

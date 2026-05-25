@@ -382,5 +382,5 @@ GLuint Drone::uploadMesh(const std::vector<float>& verts)
 
 GLuint Drone::loadDroneShaders()
 {
-    return LoadShaders("shaders/drone.vert", "shaders/drone.frag");
+    return LoadShaders("drone.vert", "drone.frag");
 }

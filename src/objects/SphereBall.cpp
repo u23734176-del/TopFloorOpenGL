@@ -30,7 +30,7 @@ float SphereBall::getRadius() const { return radius; }
 
 void SphereBall::build()
 {
-    shader = LoadShaders("shaders/basic.vert", "shaders/basic.frag");
+    shader = LoadShaders("basic.vert", "basic.frag");
 
     
     std::vector<float> data;
