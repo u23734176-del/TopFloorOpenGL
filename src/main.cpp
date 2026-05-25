@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <cstdio> // for snprintf
 
 // OpenGL imports
 #include <GL/glew.h>
@@ -30,13 +31,6 @@
 // UI & Post Processing
 #include "ui/PostProcessor.h"
 #include "ui/HUD.h"
-
-// main.cpp patches — replace the two functions below in your existing main.cpp
-// and add the throttle block inside the game loop.
-
-// ---- ADD this include at the top of main.cpp ----
-// #include "core/ShaderManager.h"   (already there)
-#include <glm/gtc/type_ptr.hpp>
 
 const int WIDTH = 1000;
 const int HEIGHT = 800;
@@ -168,12 +162,7 @@ void updateLightingForDayNight(LightSet &lights, bool isNight)
 }
 
 // ---------------------------------------------------------------------------
-// REPLACE passLightingUniforms with this version.
-// The function signature is unchanged — call sites don't need to change.
-//
-// Before: ~30 glGetUniformLocation calls per frame (driver round-trips)
-// After:  ~30 unordered_map lookups (first frame caches; subsequent frames
-//         are pure memory reads)
+// Uniform passing
 // ---------------------------------------------------------------------------
 void passLightingUniforms(GLuint shaderProgram, const LightSet &lights, const glm::vec3 &cameraPos)
 {
@@ -190,8 +179,6 @@ void passLightingUniforms(GLuint shaderProgram, const LightSet &lights, const gl
 
     ShaderManager::setInt(shaderProgram, "numPointLights", lights.numPointLights);
 
-    // FIX: build the uniform name strings on the stack (snprintf, no heap alloc)
-    // Previously used std::string concatenation inside the loop — alloc per frame.
     char buf[64];
     for (int i = 0; i < lights.numPointLights; ++i)
     {
@@ -281,7 +268,6 @@ inline void handleInput(GLFWwindow *&window, float deltaTime, PostProcessor &pos
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, 1);
-
     if (glfwGetKey(window, GLFW_KEY_8) == GLFW_PRESS)
         postProcessor.setMode(0);
     if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS)
@@ -360,7 +346,8 @@ int main()
 
     // Playable Ball (Slice E)
     SphereBall playableBall;
-    playableBall.setPosition(glm::vec3(8.0f, 0.5f, 5.0f)); // Start at Hole 1
+    playableBall.setPosition(glm::vec3(30.0f, 0.5f, 0.0f));
+    playableBall.setColor(glm::vec3(1.0f, 1.0f, 1.0f));
     scene.addObject(&playableBall);
 
     BallPhysics ballState;
@@ -376,12 +363,6 @@ int main()
     drone.setPosition(glm::vec3(0.0f, 5.0f, 0.0f));
     scene.addObject(&drone);
 
-    // Lake Water (Slice C)
-    Water lake;
-    lake.setPosition(glm::vec3(-15.0f, 0.0f, -15.0f));
-    lake.setSize(12.0f, 12.0f);
-    scene.addObject(&lake);
-
     // Upload to VRAM
     scene.build();
 
@@ -393,9 +374,7 @@ int main()
     std::cout << "WASD = fly  |  Mouse = look  |  SPACE = putt  |  N = day/night  |  8/9/0 = colour filter" << std::endl;
 
     float lastFrame = 0.0f;
-
-    // Add this before the while loop:
-      static float titleTimer = 0.0f;
+    static float titleTimer = 0.0f;
 
     // ---------------------------------------------------------------------------
     // THE GAME LOOP
@@ -406,11 +385,16 @@ int main()
         float deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // 1. Logic & Input
-        drone.processInput(window, deltaTime);
+        // ---------------------------------------------------------------------------
+        // 1. Logic & Input Routing
+        // ---------------------------------------------------------------------------
         handleInput(window, deltaTime, postProcessor, isNight, lights, camera, ballState);
+
+        // DRONE VIEW: Fly the drone, camera follows drone
+        drone.processInput(window, deltaTime);
         camera.followTarget(drone.getPosition(), drone.getFront(), drone.getRoll());
 
+        // Spotlight stays attached to the drone
         lights.spotlight.position = drone.getPosition();
         lights.spotlight.direction = drone.getFront();
         lights.spotlightEnabled = isNight;
@@ -460,6 +444,14 @@ int main()
 
         // 2C. Transparent Geometry (Water)
         glEnable(GL_BLEND);
+
+        // Pass lighting to water shader so it isn't black
+        GLuint waterShader = ShaderManager::get("water");
+        glUseProgram(waterShader);
+        passLightingUniforms(waterShader, lights, camera.getPosition());
+        glUniformMatrix4fv(glGetUniformLocation(waterShader, "lightSpaceMatrix"), 1, GL_FALSE, &lightSpaceMatrix[0][0]);
+        glUniform1i(glGetUniformLocation(waterShader, "shadowMap"), 1);
+
         scene.drawTransparentObjects(view, projection, lights);
         glDisable(GL_BLEND);
 
@@ -468,27 +460,20 @@ int main()
         postProcessor.draw();
         hud.draw(camera, WIDTH, HEIGHT, postProcessor.getMode());
 
-        // Update Window Title
-        // ---------------------------------------------------------------------------
-        // INSIDE the game loop, replace the window title block with this.
-        // Throttles the title update to once per second — was allocating strings
-        // and making a driver call every frame.
-        // ---------------------------------------------------------------------------
-
-        // Replace the title update block inside the loop with:
-            titleTimer += deltaTime;
-            if (titleTimer >= 1.0f)
-            {
-                titleTimer = 0.0f;
-                glm::vec3 camPos = camera.getPosition();
-                const char *modeText = (postProcessor.getMode() == 1) ? "Grayscale"
-                                     : (postProcessor.getMode() == 2) ? "Inverted"
-                                     : "Normal";
-                char title[128];
-                snprintf(title, sizeof(title), "Mini Golf | X:%d Y:%d Z:%d | %s",
-                         (int)camPos.x, (int)camPos.y, (int)camPos.z, modeText);
-                glfwSetWindowTitle(window, title);
-            }
+        // Update Window Title (Throttled)
+        titleTimer += deltaTime;
+        if (titleTimer >= 1.0f)
+        {
+            titleTimer = 0.0f;
+            glm::vec3 camPos = camera.getPosition();
+            const char *modeText = (postProcessor.getMode() == 1)   ? "Grayscale"
+                                   : (postProcessor.getMode() == 2) ? "Inverted"
+                                                                    : "Normal";
+            char title[128];
+            snprintf(title, sizeof(title), "Mini Golf | X:%d Y:%d Z:%d | %s",
+                     (int)camPos.x, (int)camPos.y, (int)camPos.z, modeText);
+            glfwSetWindowTitle(window, title);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();

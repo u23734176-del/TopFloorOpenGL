@@ -127,7 +127,12 @@ void Drone::processInput(GLFWwindow* window, float deltaTime)
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) position -= front   * vel;
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) position -= right   * vel;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) position += right   * vel;
-    if (glfwGetKey(window, GLFW_KEY_SPACE)        == GLFW_PRESS) position += worldUp * vel;
+    // Inside Drone::processInput(...)
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) // Changed from SPACE
+        position += worldUp * speed * deltaTime;
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        position -= worldUp * speed * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) position -= worldUp * vel;
 
     if (glfwGetKey(window, GLFW_KEY_LEFT)  == GLFW_PRESS) yaw   -= rotSpeed;
