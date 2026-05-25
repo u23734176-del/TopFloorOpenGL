@@ -22,6 +22,7 @@ src/objects/StaticMesh.cpp \
 src/objects/SphereBall.cpp \
 src/objects/Water.cpp \
 src/objects/Drone.cpp \
+src/objects/GrassBase.cpp \
 src/layout/Course.cpp \
 skybox/skybox.cpp \
 src/objects/Windmill.cpp \

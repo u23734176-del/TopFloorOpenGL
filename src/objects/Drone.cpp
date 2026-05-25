@@ -302,8 +302,8 @@ std::vector<float> Drone::makeDisc(float r, int slices,
         float a0 = i     * 2.0f * PI / slices;
         float a1 = (i+1) * 2.0f * PI / slices;
         v.insert(v.end(), {0,0,0,ro,go,bo,
-                           cos(a0)*r, 0, sin(a0)*r, ro,go,bo,
-                           cos(a1)*r, 0, sin(a1)*r, ro,go,bo});
+                           (float) cos(a0)*r, 0, (float) sin(a0)*r, ro,go,bo,
+                           (float) cos(a1)*r, 0, (float) sin(a1)*r, ro,go,bo});
     }
     return v;
 }

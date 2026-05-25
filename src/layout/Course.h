@@ -9,6 +9,7 @@
 #include "../objects/Floor.h"
 #include "../objects/Water.h"
 #include "../objects/AssimpModel.h"
+#include "../objects/GrassBase.h"
 
 #include <vector>
 
@@ -40,9 +41,11 @@ public:
 private:
     // ---- Level Base ----
     Floor baseFloor;
-
+    Cube pathFloor;
+    Cube boundWalls[4];
     // ---- Holes ----
     GolfHole holes[18];
+    GrassBase grassBases[18];
 
     // ---- Rocks ----
     static const int MAX_ROCKS = 32;
