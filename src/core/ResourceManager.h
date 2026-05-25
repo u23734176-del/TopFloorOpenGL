@@ -5,6 +5,8 @@
 #include <string>
 #include <GL/glew.h>
 
+class AssimpModel;
+
 struct Texture {
     GLuint id;
     int width;
@@ -25,11 +27,16 @@ private:
     
     // Texture cache
     std::unordered_map<std::string, Texture*> textures;
-    
+    std::unordered_map<std::string, AssimpModel*> models;
+
     // Private constructor for singleton
     ResourceManager();
     
 public:
+    // Add to public in ResourceManager.h
+    AssimpModel *getOrLoadModel(const std::string &path);
+    void unloadAllModels();
+    
     // Delete copy constructor and assignment
     ResourceManager(const ResourceManager&) = delete;
     ResourceManager& operator=(const ResourceManager&) = delete;

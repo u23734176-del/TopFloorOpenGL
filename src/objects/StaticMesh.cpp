@@ -1,5 +1,6 @@
 #include "StaticMesh.h"
 #include "../core/ShaderManager.h"
+#include "../core/ResourceManager.h"
 
 StaticMesh::StaticMesh(const std::vector<float> &geometry)
     : vao(0), vbo(0), vertexCount(0), vertexData(geometry)

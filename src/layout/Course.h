@@ -6,19 +6,11 @@
 #include "../objects/Rock.h"
 #include "../objects/Tunnel.h"
 #include "../objects/Windmill.h"
+#include "../objects/Floor.h"
+#include "../objects/Water.h"
+#include "../objects/AssimpModel.h"
 
 #include <vector>
-
-// Course: builds and owns all 18 holes + Slice D obstacles.
-// Add to scene via addToScene().
-//
-// World layout (top-down, matches the annotated map):
-//   Holes 1-9  roughly form the outer clockwise ring.
-//   Holes 10-18 fill the upper-left side.
-//   The central lake area is around (0, 0, 0) in world space.
-//
-// All Y positions start at 0 (ground plane).
-// Positions are approximate layout coordinates derived from the course map.
 
 class Course
 {
@@ -26,31 +18,43 @@ public:
     Course();
     ~Course();
 
-    // Build all geometry (call before addToScene)
     void build();
-
-    // Register all objects with the scene's addObject function
-    // Uses a callback so we don't need to include Scene.h here.
-    void addToScene(void (*addFn)(SceneObject*));
-
+    void addToScene(void (*addFn)(SceneObject *));
     void update(float dt);
 
 private:
-    // ---- Holes ----
+    Floor baseFloor;
+    Water lake; // Moving lake inside course manager!
+
     GolfHole holes[18];
 
-    // ---- Rocks ----
-    // Holes with rocks: 5, 9, 10, 11, 12, 14, 15, 16
-    // We give a fixed-size pool; unused ones are not added to scene.
     static const int MAX_ROCKS = 32;
-    Rock   rocks[MAX_ROCKS];
-    int    numRocks;
+    Rock rocks[MAX_ROCKS];
+    int numRocks;
+    int rockIndex;
 
-    // ---- Obstacles ----
-    Tunnel   tunnel;     // hole 7
-    Windmill windmill;   // hole 8
+    Tunnel tunnel;
+    Windmill windmill;
 
-    // ---- setup helpers ----
+    // Decoration arrays
+    AssimpModel *gazebo;
+    std::vector<Floor *> pathways;
+    std::vector<AssimpModel *> trees;
+    std::vector<AssimpModel *> lamps;
+    std::vector<AssimpModel *> bushes;
+    std::vector<AssimpModel *> benches;
+
+    // Generators
+    Rock &nextRock();
+    void createPathSegment(const glm::vec3 &pos, const glm::vec3 &scale, float rotY);
+    void spawnTree(const glm::vec3 &pos, float scale);
+    void spawnBush(const glm::vec3 &pos, float scale);
+    void spawnLamp(const glm::vec3 &pos);
+    void spawnBench(const glm::vec3 &pos, float rotY);
+
+    void generatePathways();
+    void scatterDecorations();
+
     void setupHole1();
     void setupHole2();
     void setupHole3();
@@ -69,9 +73,6 @@ private:
     void setupHole16();
     void setupHole17();
     void setupHole18();
-
-    Rock& nextRock();
-    int   rockIndex;
 };
 
 #endif

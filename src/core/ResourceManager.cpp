@@ -2,6 +2,7 @@
 #include "../../stb_image.h"
 #include <iostream>
 #include <cstdio>
+#include "../objects/AssimpModel.h"
 
 // Initialize static member
 ResourceManager* ResourceManager::instance = nullptr;
@@ -162,6 +163,25 @@ void ResourceManager::cleanupUnusedTextures() {
         }
     }
 }
+
+AssimpModel *ResourceManager::getOrLoadModel(const std::string &path)
+{
+    if (models.find(path) == models.end())
+    {
+        AssimpModel *m = new AssimpModel(path);
+        m->build();
+        models[path] = m;
+    }
+    return models[path];
+}
+
+void ResourceManager::unloadAllModels()
+{
+    for (auto &pair : models)
+        delete pair.second;
+    models.clear();
+}
+// Add to destructor: unloadAllModels();
 
 // Static cleanup function
 void cleanupResourceManager() {

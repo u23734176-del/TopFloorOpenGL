@@ -3,12 +3,13 @@
 
 #include "../lighting/LightSet.h"
 #include "../physics/Collision.h"
-#include "ResourceManager.h"
-
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
+#include <string>
+
+class Texture;
 
 class SceneObject
 {

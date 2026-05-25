@@ -1,4 +1,5 @@
 #include "SceneObject.h"
+#include "ResourceManager.h"
 #include <iostream>
 #include <algorithm>
 #include <cfloat>

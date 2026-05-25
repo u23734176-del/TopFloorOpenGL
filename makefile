@@ -5,6 +5,7 @@ src/core/Scene.cpp \
 src/core/ShaderManager.cpp \
 src/core/shader.cpp \
 src/core/SceneObject.cpp \
+src/objects/AssimpModel.cpp \
 src/core/ResourceManager.cpp \
 src/objects/Cube.cpp \
 stb_image.cpp \
@@ -17,7 +18,6 @@ src/objects/Rock.cpp \
 src/objects/Tunnel.cpp \
 src/objects/GolfHole.cpp \
 src/objects/StaticMesh.cpp \
-src/objects/AssimpModel.cpp \
 src/objects/SphereBall.cpp \
 src/objects/Water.cpp \
 src/objects/Drone.cpp \
